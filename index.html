@@ -11,6 +11,7 @@
     .completed { background-color: #c8f7c5; }
     .incomplete { background-color: #f7c5c5; }
     .upcoming { background-color: #fff3c5; }
+    .program { margin-top: 10px; font-size: 0.9em; color: #333; }
   </style>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -31,16 +32,21 @@
 
     const gunler = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
 
+    async function loadProgram() {
+      const response = await fetch("program.json");
+      return await response.json();
+    }
+
     function getDateOfThisWeek(dayIndex) {
       const now = new Date();
       const first = now.getDate() - now.getDay() + 1 + dayIndex;
-      const target = new Date(now.setDate(first));
+      const target = new Date(new Date().setDate(first));
       return target.toISOString().split("T")[0];
     }
 
     async function loadWeek() {
       const container = document.getElementById("week");
-      const todayStr = new Date().toISOString().split("T")[0];
+      const programData = await loadProgram();
 
       for (let i = 0; i < 7; i++) {
         const date = getDateOfThisWeek(i);
@@ -59,6 +65,10 @@
         checkbox.dataset.date = date;
         checkbox.onchange = kaydet;
 
+        const detail = document.createElement("div");
+        detail.className = "program";
+        detail.innerText = programData[gunler[i]] || "Program bilgisi yok";
+
         if (docSnap.exists()) {
           const durum = docSnap.data().durum;
           if (durum === "Tamamlandı") {
@@ -74,6 +84,7 @@
         div.appendChild(label);
         div.appendChild(document.createElement("br"));
         div.appendChild(checkbox);
+        div.appendChild(detail);
         container.appendChild(div);
       }
     }
