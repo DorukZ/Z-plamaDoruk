@@ -1,1 +1,55 @@
-{'Pazartesi': 'Box Jump 3x10, Deadlift 3x8', 'Salı': 'Bulgarian Split Squat 3x10, Calf Raise 4x12', 'Çarşamba': 'Single Leg Hop 3x10, Lunge Walk 3x20 adım', 'Perşembe': 'Hex Bar Jump 3x5, Plank 3x30sn', 'Cuma': 'Dumbbell Jump Squat 3x8, Romanian Deadlift 3x10', 'Cumartesi': 'Ladder Drill 5x, Side Shuffle 3x', 'Pazar': 'Dinlenme Günü veya Hafif Esneme'}
+{
+  "pazartesi": {
+    "antrenmanlar": [
+      "Basketbol Antrenmanı",
+      "Plank 3×1dk",
+      "Dead Bug 3×12",
+      "Calf Raises 4×15"
+    ]
+  },
+  "sali": {
+    "antrenmanlar": [
+      "Jump Squat 3×10",
+      "Bulgarian Split Squat 3×8",
+      "Dumbbell RDL 3×10",
+      "Seated Calf Raises 3×20",
+      "Russian Twist 3×20"
+    ]
+  },
+  "carsamba": {
+    "antrenmanlar": [
+      "Basketbol Antrenmanı",
+      "Side Plank (30sn×2)",
+      "Bird-Dog 3×12"
+    ]
+  },
+  "persembe": {
+    "antrenmanlar": [
+      "Basketbol Antrenmanı",
+      "İsteğe Bağlı: Hafif Calf (Bodyweight)"
+    ]
+  },
+  "cuma": {
+    "antrenmanlar": [
+      "Goblet Squat 3×12",
+      "Push-up 3×Max",
+      "Bent-over Row 3×10",
+      "Shoulder Press 3×10",
+      "Standing Calf Raises 3×20"
+    ]
+  },
+  "cumartesi": {
+    "antrenmanlar": [
+      "Basketbol Antrenmanı",
+      "Leg Raise 3×15",
+      "Plank 2×1dk"
+    ]
+  },
+  "pazar": {
+    "antrenmanlar": [
+      "Basketbol Antrenmanı",
+      "Jump Lunge 3×10",
+      "Calf Raises 4×20"
+    ]
+  }
+}
