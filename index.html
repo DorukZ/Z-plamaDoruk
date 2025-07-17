@@ -1,111 +1,148 @@
-
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8" />
-  <title>Haftalık Zıplama Antrenmanı</title>
+  <meta charset="UTF-8">
+  <title>Zıplama Takibi</title>
   <style>
-    body { font-family: Arial; padding: 20px; }
-    h1 { color: #333; }
-    .day { margin-bottom: 10px; padding: 10px; border-radius: 5px; border: 1px solid #ccc; }
-    .completed { background-color: #c8f7c5; }
-    .incomplete { background-color: #f7c5c5; }
-    .upcoming { background-color: #fff3c5; }
-    .program { margin-top: 10px; font-size: 0.9em; color: #333; }
+    body { font-family: Arial; background: #f5f5f5; padding: 30px; }
+    h1, h2 { color: #333; cursor: pointer; }
+    ul { list-style: none; padding: 0; }
+    li { background: white; margin: 8px 0; padding: 12px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); display: flex; align-items: center; }
+    input[type="checkbox"] { transform: scale(1.2); margin-right: 12px; }
+    li.checked { background: #d4edda; text-decoration: line-through; color: #3c763d; }
+    #tamamlandiMesaj { margin-top: 20px; font-weight: bold; color: green; }
+
+    #takvimPanel { display: none; margin-top: 20px; display: flex; flex-wrap: wrap; gap: 10px; }
+    .gunKutu { width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; border-radius: 10px; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+    .done { background-color: #d4edda; }
+    .todo { background-color: #f8d7da; }
+    .today { background-color: #fff3cd; }
+
+    #gunDetay { margin-top: 20px; padding: 10px; background: white; border-left: 5px solid #007bff; display: none; }
   </style>
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+</head>
+<body>
+  <h1>Bugünkü Antrenman</h1>
+  <ul id="liste"></ul>
+  <div id="tamamlandiMesaj"></div>
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyAUN-2vTAJ47_Gqu1CCakODKL3UwSXg41E",
-      authDomain: "ziplama-3d74f.firebaseapp.com",
-      projectId: "ziplama-3d74f",
-      storageBucket: "ziplama-3d74f.firebasestorage.app",
-      messagingSenderId: "774323479140",
-      appId: "1:774323479140:web:444009f163d15f15f5b571",
-      measurementId: "G-PVX9F2M743"
-    };
+  <h2 onclick="toggleTakvim()">📆 İlerleme Takvimi (Tıklayınca Açılır)</h2>
+  <div id="takvimPanel"></div>
+  <div id="gunDetay"></div>
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+  <script>
+    const gunler = ["pazar", "pazartesi", "sali", "carsamba", "persembe", "cuma", "cumartesi"];
+    const bugun = new Date();
+    const bugunGun = gunler[bugun.getDay()];
+    const tarih = bugun.toLocaleDateString("tr-TR");
 
-    const gunler = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
-
-    async function loadProgram() {
-      const response = await fetch("program.json");
-      return await response.json();
+    function anahtar(gun, index, t) {
+      return `tamam_${gun}_${index}_${t}`;
     }
 
-    function getDateOfThisWeek(dayIndex) {
-      const now = new Date();
-      const first = now.getDate() - now.getDay() + 1 + dayIndex;
-      const target = new Date(new Date().setDate(first));
-      return target.toISOString().split("T")[0];
+    async function getirProgram(gunAdi) {
+      const res = await fetch("program.json");
+      const program = await res.json();
+      return program[gunAdi]?.antrenmanlar || [];
     }
 
-    async function loadWeek() {
-      const container = document.getElementById("week");
-      const programData = await loadProgram();
+    async function gosterBugun() {
+      const liste = document.getElementById("liste");
+      liste.innerHTML = "";
+      const antrenmanlar = await getirProgram(bugunGun);
+      const mesaj = document.getElementById("tamamlandiMesaj");
+      mesaj.innerText = "";
 
-      for (let i = 0; i < 7; i++) {
-        const date = getDateOfThisWeek(i);
-        const ref = doc(db, "antrenmanlar", date);
-        const docSnap = await getDoc(ref);
-
-        const div = document.createElement("div");
-        div.className = "day";
-        div.id = "div_" + date;
-
-        const label = document.createElement("label");
-        label.innerText = gunler[i] + " (" + date + ")";
-
+      antrenmanlar.forEach((item, index) => {
+        const li = document.createElement("li");
         const checkbox = document.createElement("input");
         checkbox.type = "checkbox";
-        checkbox.dataset.date = date;
-        checkbox.onchange = kaydet;
+        checkbox.id = "check_" + index;
+        const kayitli = localStorage.getItem(anahtar(bugunGun, index, tarih));
+        checkbox.checked = kayitli === "true";
 
-        const detail = document.createElement("div");
-        detail.className = "program";
-        detail.innerText = programData[gunler[i]] || "Program bilgisi yok";
+        const label = document.createElement("label");
+        label.htmlFor = "check_" + index;
+        label.innerText = item;
 
-        if (docSnap.exists()) {
-          const durum = docSnap.data().durum;
-          if (durum === "Tamamlandı") {
-            checkbox.checked = true;
-            div.classList.add("completed");
+        if (checkbox.checked) li.classList.add("checked");
+
+        checkbox.addEventListener("change", async () => {
+          localStorage.setItem(anahtar(bugunGun, index, tarih), checkbox.checked);
+          checkbox.checked ? li.classList.add("checked") : li.classList.remove("checked");
+
+          const toplam = antrenmanlar.length;
+          const isaretli = document.querySelectorAll("input[type='checkbox']:checked").length;
+
+          if (isaretli === toplam) {
+            localStorage.setItem(tarih, "tamamlandi");
+            mesaj.innerText = "✅ Tebrikler, bugünün antrenmanı tamamlandı!";
           } else {
-            div.classList.add("incomplete");
+            localStorage.removeItem(tarih);
+            mesaj.innerText = "";
           }
-        } else {
-          div.classList.add("upcoming");
-        }
+          takvimiYenile();
+        });
 
-        div.appendChild(label);
-        div.appendChild(document.createElement("br"));
-        div.appendChild(checkbox);
-        div.appendChild(detail);
-        container.appendChild(div);
+        li.appendChild(checkbox);
+        li.appendChild(label);
+        liste.appendChild(li);
+      });
+
+      if (antrenmanlar.length > 0 && antrenmanlar.every((_, i) => localStorage.getItem(anahtar(bugunGun, i, tarih)) === "true")) {
+        localStorage.setItem(tarih, "tamamlandi");
+        mesaj.innerText = "✅ Tebrikler, bugünün antrenmanı tamamlandı!";
+      }
+
+      takvimiYenile();
+    }
+
+    function toggleTakvim() {
+      const panel = document.getElementById("takvimPanel");
+      panel.style.display = panel.style.display === "none" ? "flex" : "none";
+    }
+
+    async function takvimiYenile() {
+      const panel = document.getElementById("takvimPanel");
+      panel.innerHTML = "";
+
+      for (let i = 6; i >= 0; i--) {
+        const gun = new Date();
+        gun.setDate(bugun.getDate() - i);
+        const gunStr = gun.toLocaleDateString("tr-TR");
+        const durum = localStorage.getItem(gunStr);
+
+        const div = document.createElement("div");
+        div.className = "gunKutu";
+        div.innerText = gunStr.split(".").slice(0, 2).join(".");
+        if (gunStr === tarih) div.classList.add("today");
+        else if (durum === "tamamlandi") div.classList.add("done");
+        else div.classList.add("todo");
+
+        div.addEventListener("click", () => gosterDetay(gunStr));
+        panel.appendChild(div);
       }
     }
 
-    async function kaydet(e) {
-      const date = e.target.dataset.date;
-      const durum = e.target.checked ? "Tamamlandı" : "Yapılmadı";
-      await setDoc(doc(db, "antrenmanlar", date), {
-        tarih: date,
-        durum: durum
+    async function gosterDetay(tarihStr) {
+      const detay = document.getElementById("gunDetay");
+      detay.style.display = "block";
+      const gun = new Date(tarihStr.split(".").reverse().join("-"));
+      const gunAdi = gunler[gun.getDay()];
+      const program = await fetch("program.json").then(r => r.json());
+      const liste = program[gunAdi]?.antrenmanlar || [];
+
+      let html = `<h3>${tarihStr} (${gunAdi.toUpperCase()})</h3><ul>`;
+      liste.forEach((item, index) => {
+        const anahtarStr = `tamam_${gunAdi}_${index}_${tarihStr}`;
+        const tikliMi = localStorage.getItem(anahtarStr) === "true";
+        html += `<li>${tikliMi ? "✅" : "❌"} ${item}</li>`;
       });
-      const div = document.getElementById("div_" + date);
-      div.classList.remove("completed", "incomplete", "upcoming");
-      div.classList.add(durum === "Tamamlandı" ? "completed" : "incomplete");
+      html += "</ul>";
+      detay.innerHTML = html;
     }
 
-    window.onload = loadWeek;
+    window.onload = gosterBugun;
   </script>
-</head>
-<body>
-  <h1>Haftalık Zıplama Antrenmanı Takibi</h1>
-  <div id="week"></div>
 </body>
 </html>
