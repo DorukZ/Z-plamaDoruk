@@ -2,151 +2,129 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Zıplama Antrenman Takvimi</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     :root {
-      --bg-color: #f2f2f2;
-      --text-color: #000;
-      --card-bg: #fff;
+      --bg: #f2f2f2;
+      --text: #000;
+      --card: #fff;
+      --border: #ccc;
     }
-    .dark {
-      --bg-color: #121212;
-      --text-color: #eee;
-      --card-bg: #1e1e1e;
+    body.dark {
+      --bg: #121212;
+      --text: #eee;
+      --card: #1e1e1e;
+      --border: #444;
     }
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background-color: var(--bg-color);
-      color: var(--text-color);
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
       margin: 0;
       padding: 1rem;
-    }
-    .container {
-      max-width: 1000px;
-      margin: auto;
       text-align: center;
+      transition: background 0.3s, color 0.3s;
     }
-    h1 { margin-bottom: 10px; }
-    #month-nav { margin-bottom: 1rem; }
+    h1 {
+      margin-bottom: 10px;
+    }
+    #month-nav {
+      margin-bottom: 1rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+    }
     .calendar {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
-      gap: 6px;
+      gap: 10px;
+      max-width: 900px;
+      margin: auto;
     }
     .day {
-      background: var(--card-bg);
-      border: 1px solid #ccc;
+      background: var(--card);
+      border: 2px solid var(--border);
       padding: 10px;
-      border-radius: 8px;
+      border-radius: 6px;
       cursor: pointer;
       transition: 0.2s;
     }
-    .day:hover { box-shadow: 0 0 5px rgba(0,0,0,0.2); }
-    .today { border: 2px solid #007bff; }
-    .completed { background-color: #c8f7c5; }
-    .incomplete { background-color: #f7c5c5; }
-    .in-progress { background-color: #fff3b0; }
-    .past-day { opacity: 0.5; }
+    .today {
+      border: 2px solid black;
+    }
+    .completed {
+      background-color: #c8f7c5;
+    }
+    .incomplete {
+      background-color: #f7c5c5;
+    }
+    .in-progress {
+      background-color: #fff3b0;
+    }
+    .past-day:not(.today) {
+      opacity: 0.5;
+    }
     .workout-container {
-      background: var(--card-bg);
       margin-top: 20px;
+      text-align: left;
+      background: var(--card);
       padding: 20px;
       border-radius: 8px;
-      text-align: left;
+      max-width: 500px;
+      margin-left: auto;
+      margin-right: auto;
+      border: 1px solid var(--border);
     }
-    .checkbox { margin: 5px 0; }
-    #theme-toggle {
+    .checkbox {
+      margin: 5px 0;
+    }
+    #days-header {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      max-width: 900px;
+      margin: auto;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .toggle-mode {
       position: fixed;
       top: 10px;
       right: 10px;
-      background: #ddd;
-      border: none;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      font-size: 1.2rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 5px 10px;
+      border-radius: 4px;
       cursor: pointer;
     }
     @media (max-width: 600px) {
-      .calendar { grid-template-columns: repeat(7, 1fr); gap: 4px; }
-      .day { padding: 6px; font-size: 0.8rem; }
+      .day, .calendar, #days-header {
+        font-size: 0.7rem;
+        padding: 6px;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <button id="theme-toggle">🌙</button>
-    <h1>Zıplama Antrenman Takvimi</h1>
-    <div id="month-nav">
-      <button onclick="changeMonth(-1)">←</button>
-      <span id="month-year">Yükleniyor...</span>
-      <button onclick="changeMonth(1)">→</button>
-    </div>
-    <div class="calendar" id="calendar"></div>
-    <div class="workout-container" id="workout-details">Gün bilgisi yüklenecek...</div>
+  <button class="toggle-mode" onclick="toggleDarkMode()">🌙</button>
+  <h1>Zıplama Antrenman Takvimi</h1>
+  <div id="month-nav">
+    <button onclick="changeMonth(-1)">←</button>
+    <span id="month-year">Yükleniyor...</span>
+    <button onclick="changeMonth(1)">→</button>
   </div>
+  <div id="days-header">
+    <div>Pzt</div><div>Salı</div><div>Çarş</div><div>Perş</div><div>Cuma</div><div>Ctesi</div><div>Pazar</div>
+  </div>
+  <div class="calendar" id="calendar"></div>
+  <div class="workout-container" id="workout-details">Gün bilgisi yüklenecek...</div>
+
   <script>
-    const allowedMonths = [6, 7, 8]; // Temmuz (6), Ağustos (7), Eylül (8)
-    let currentDate = new Date();
-    if (!allowedMonths.includes(currentDate.getMonth())) {
-      currentDate = new Date(currentDate.getFullYear(), 6, 1);
-    }
-    let currentMonth = currentDate.getMonth();
-    let currentYear = currentDate.getFullYear();
-
-    document.getElementById('theme-toggle').onclick = () => {
+    function toggleDarkMode() {
       document.body.classList.toggle('dark');
-    };
-
-    function formatDate(date) {
-      const offsetDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-      return offsetDate.toISOString().split('T')[0];
     }
-
-    function changeMonth(offset) {
-      let nextMonth = currentMonth + offset;
-      if (nextMonth < 6) nextMonth = 8;
-      if (nextMonth > 8) nextMonth = 6;
-      currentMonth = nextMonth;
-      renderCalendar(currentMonth, currentYear);
-    }
-
-    function renderCalendar(month, year) {
-      const calendar = document.getElementById('calendar');
-      const monthYearText = document.getElementById('month-year');
-      calendar.innerHTML = '';
-      const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül"];
-      monthYearText.textContent = `${monthNames[month]} ${year}`;
-
-      const firstDay = new Date(year, month, 1);
-      const todayStr = formatDate(new Date());
-
-      for (let i = 0; i < firstDay.getDay(); i++) {
-        const empty = document.createElement('div');
-        calendar.appendChild(empty);
-      }
-
-      let day = new Date(year, month, 1);
-      while (day.getMonth() === month) {
-        const dateStr = formatDate(day);
-        const dayEl = document.createElement('div');
-        dayEl.className = 'day';
-        dayEl.textContent = day.getDate();
-
-        if (dateStr === todayStr) dayEl.classList.add('today');
-        if (new Date(dateStr) < new Date(todayStr)) dayEl.classList.add('past-day');
-
-        dayEl.onclick = () => {
-          document.getElementById('workout-details').innerHTML = `<h3>${dateStr} Antrenmanı</h3><p>Buraya antrenman bilgileri entegre edilecek.</p>`;
-        };
-
-        calendar.appendChild(dayEl);
-        day.setDate(day.getDate() + 1);
-      }
-    }
-
-    renderCalendar(currentMonth, currentYear);
   </script>
 </body>
 </html>
