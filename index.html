@@ -3,34 +3,28 @@
 <head>
   <meta charset="UTF-8">
   <title>Antrenman Takvimi</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
-    body {
-      font-family: sans-serif;
-      background: #f2f2f2;
-      padding: 20px;
-    }
-    h1 {
-      text-align: center;
-    }
+    body { font-family: sans-serif; background: #f3f4f6; padding: 20px; }
+    h1 { text-align: center; }
     #takvim {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
       gap: 10px;
-      max-width: 800px;
-      margin: auto;
+      max-width: 900px;
+      margin: 0 auto;
     }
     .gun {
-      background: #eee;
-      padding: 10px;
+      background: #fff;
+      padding: 12px;
       border-radius: 8px;
       text-align: center;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+      cursor: pointer;
       font-size: 14px;
-      font-weight: bold;
     }
-    .yesil { background-color: #a3e635; } /* tamamlandı */
-    .kirmizi { background-color: #f87171; } /* yapılmadı */
-    .sari { background-color: #facc15; } /* bugün */
+    .yesil { background-color: #d9f99d !important; }
+    .kirmizi { background-color: #fecaca !important; }
+    .sari { background-color: #fde68a !important; }
   </style>
 </head>
 <body>
@@ -38,42 +32,61 @@
   <div id="takvim">Yükleniyor...</div>
 
   <script>
-    const SUPABASE_URL = 'https://drnvqepwzzhsghidavap.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRybnZxZXB3enpoc2doaWRhdmFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI3OTYwMTgsImV4cCI6MjA2ODM3MjAxOH0.i5TNqyZNajuoPFejMaG1BVA-SFOfVfV5aUgCgEEm6nw';
+    const BIN_ID = "6879920188dde70cf2e7204c";
+    const API_KEY = "$2a$10$bsG5d5R/i4NWOHPsA1/aqOLbOZJPb9mLMCftNjbEJ..U1tsHoBlGm";
 
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    async function getVeri() {
+      const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+        headers: { "X-Master-Key": API_KEY }
+      });
+      const json = await res.json();
+      return json.record;
+    }
 
-    async function takvimiYukle() {
-      const { data, error } = await supabase.from('program').select('*').order('tarih', { ascending: true });
-      const container = document.getElementById('takvim');
-      container.innerHTML = '';
-
-      if (error) {
-        container.innerHTML = 'Veri alınamadı.';
-        console.error(error);
-        return;
-      }
-
-      const bugunStr = new Date().toISOString().split('T')[0];
-
-      data.forEach(gun => {
-        const div = document.createElement('div');
-        div.classList.add('gun');
-
-        if (gun.tarih === bugunStr) {
-          div.classList.add('sari');
-        } else if (gun.tamamlandi) {
-          div.classList.add('yesil');
-        } else {
-          div.classList.add('kirmizi');
-        }
-
-        div.textContent = gun.tarih;
-        container.appendChild(div);
+    async function setVeri(yeniVeri) {
+      await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Master-Key": API_KEY
+        },
+        body: JSON.stringify(yeniVeri)
       });
     }
 
-    takvimiYukle();
+    function formatTarih(str) {
+      const d = new Date(str);
+      return d.toLocaleDateString("tr-TR", { weekday: 'short', month: 'short', day: 'numeric' });
+    }
+
+    async function renderTakvim() {
+      const veri = await getVeri();
+      const container = document.getElementById("takvim");
+      container.innerHTML = "";
+
+      const bugun = new Date().toISOString().split("T")[0];
+
+      veri.forEach((item, i) => {
+        const kutu = document.createElement("div");
+        kutu.classList.add("gun");
+
+        if (item.tarih === bugun) kutu.classList.add("sari");
+        else if (item.tamamlandi) kutu.classList.add("yesil");
+        else kutu.classList.add("kirmizi");
+
+        kutu.innerHTML = `<strong>${formatTarih(item.tarih)}</strong><br>${item.tamamlandi ? "✅ Tamamlandı" : "❌ Eksik"}`;
+
+        kutu.onclick = async () => {
+          veri[i].tamamlandi = !veri[i].tamamlandi;
+          await setVeri(veri);
+          renderTakvim(); // yeniden çiz
+        };
+
+        container.appendChild(kutu);
+      });
+    }
+
+    renderTakvim();
   </script>
 </body>
 </html>
