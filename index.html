@@ -2,133 +2,184 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Zıplama Antrenman Takvimi</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       background: #f7f7f7;
+      text-align: center;
       margin: 0;
-      padding: 2rem;
+      padding: 1rem;
     }
     h1 {
-      text-align: center;
+      margin-bottom: 10px;
+    }
+    #month-nav {
+      margin-bottom: 1rem;
     }
     .calendar {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
-      gap: 0.5rem;
-      max-width: 1000px;
-      margin: 1rem auto;
+      gap: 10px;
+      justify-content: center;
+      max-width: 900px;
+      margin: auto;
     }
     .day {
-      border: 1px solid #ccc;
-      padding: 0.5rem;
-      border-radius: 8px;
-      background: #fff;
-      min-height: 100px;
+      background-color: white;
+      border: 2px solid #ccc;
+      padding: 10px;
+      border-radius: 6px;
       cursor: pointer;
-      transition: background 0.2s ease-in-out;
     }
-    .day.completed {
-      background: #c2f0c2;
+    .today {
+      border: 2px solid black;
     }
-    .day.incomplete {
-      background: #ffc0c0;
+    .completed {
+      background-color: #c8f7c5;
     }
-    .day.inprogress {
-      background: #fffac0;
+    .incomplete {
+      background-color: #f7c5c5;
     }
-    .day.today {
-      border: 2px solid #000;
+    .in-progress {
+      background-color: #fff3b0;
     }
-    .detail {
-      max-width: 800px;
-      margin: 1rem auto;
-      padding: 1rem;
-      background: #fff;
+    .workout-container {
+      margin-top: 20px;
+      text-align: left;
+      background: white;
+      padding: 20px;
       border-radius: 8px;
+      max-width: 500px;
+      margin-left: auto;
+      margin-right: auto;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
-    label {
-      display: block;
-      margin: 0.5rem 0;
+    .checkbox {
+      margin: 5px 0;
     }
   </style>
 </head>
 <body>
   <h1>Zıplama Antrenman Takvimi</h1>
+  <div id="month-nav">
+    <button onclick="changeMonth(-1)">←</button>
+    <span id="month-year">Yükleniyor...</span>
+    <button onclick="changeMonth(1)">→</button>
+  </div>
   <div class="calendar" id="calendar"></div>
-  <div class="detail" id="detail"></div>
+
+  <div class="workout-container" id="workout-details">
+    <p>Gün bilgisi yüklenecek...</p>
+  </div>
 
   <script>
-    const program = {
+    const workouts = {
       "2025-07-15": ["Barfiks", "Dumbbell Row", "Plank"],
-      "2025-07-16": ["Bulgarian Split Squat", "Jump Squat", "Calf Raise", "Incline Dumbbell Press", "Chest Fly"],
-      "2025-07-17": ["Dumbbell Bench Press", "Lateral Raise", "Push-up"],
+      "2025-07-16": ["Bulgarian Split Squat", "Jump Squat", "Calf Raise", "Bench Press"],
+      "2025-07-17": ["Dumbbell", "Lateral Raise", "Push-up"],
       "2025-07-18": ["Barbell Deadlift", "Hip Thrust", "Jumping Lunges"],
       "2025-07-19": ["Overhead Press", "Front Raise", "Side Plank"],
       "2025-07-20": ["Box Jump", "Single Leg Jump", "Wall Sit"],
       "2025-07-21": ["İstirahat / Aktif Dinlenme"]
     };
 
-    const completion = JSON.parse(localStorage.getItem("completion") || "{}");
-    const todayStr = new Date().toISOString().slice(0, 10);
+    let currentDate = new Date();
+    let currentMonth = currentDate.getMonth();
+    let currentYear = currentDate.getFullYear();
 
-    function renderCalendar() {
+    function formatDate(date) {
+      return date.toISOString().split("T")[0];
+    }
+
+    function renderCalendar(month, year) {
       const calendar = document.getElementById("calendar");
+      const monthYearText = document.getElementById("month-year");
       calendar.innerHTML = "";
-      const start = new Date("2025-07-01");
-      for (let i = 0; i < 31; i++) {
-        const date = new Date(start);
-        date.setDate(start.getDate() + i);
-        const dateStr = date.toISOString().slice(0, 10);
-        const div = document.createElement("div");
-        div.className = "day";
-        div.textContent = date.toLocaleDateString("tr-TR", { day: 'numeric', month: 'long' });
+      const date = new Date(year, month, 1);
+      const todayStr = formatDate(new Date());
 
-        if (dateStr === todayStr) div.classList.add("today");
-        if (completion[dateStr]?.length === (program[dateStr]?.length || 0)) {
-          div.classList.add("completed");
-        } else if (completion[dateStr]?.length > 0) {
-          div.classList.add("inprogress");
-        } else if (completion[dateStr]) {
-          div.classList.add("incomplete");
+      const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+      monthYearText.textContent = `${monthNames[month]} ${year}`;
+
+      while (date.getMonth() === month) {
+        const dayEl = document.createElement("div");
+        const dateStr = formatDate(date);
+        dayEl.className = "day";
+        dayEl.textContent = `${date.getDate()} ${monthNames[month]}`;
+        if (dateStr === todayStr) dayEl.classList.add("today");
+        if (localStorage.getItem(dateStr)) {
+          const status = localStorage.getItem(dateStr);
+          if (status === "completed") dayEl.classList.add("completed");
+          else if (status === "in-progress") dayEl.classList.add("in-progress");
+          else dayEl.classList.add("incomplete");
         }
 
-        div.addEventListener("click", () => renderDetail(dateStr));
-        calendar.appendChild(div);
+        dayEl.onclick = () => showWorkoutDetails(dateStr);
+        calendar.appendChild(dayEl);
+        date.setDate(date.getDate() + 1);
       }
     }
 
-    function renderDetail(dateStr = todayStr) {
-      const detail = document.getElementById("detail");
-      const list = program[dateStr];
-      if (!list) {
-        detail.innerHTML = `<strong>${dateStr}</strong><p>Program yok</p>`;
+    function showWorkoutDetails(dateStr) {
+      const container = document.getElementById("workout-details");
+      const todayStr = formatDate(new Date());
+      const items = workouts[dateStr];
+
+      container.innerHTML = `<h3>${dateStr} Antrenmanı</h3>`;
+
+      if (!items) {
+        container.innerHTML += `<p>Bu tarihte antrenman yok.</p>`;
         return;
       }
-      let html = `<h3>${dateStr} Antrenmanı</h3>`;
-      list.forEach((item, i) => {
-        const checked = completion[dateStr]?.includes(i) ? "checked" : "";
-        const disabled = dateStr !== todayStr ? "disabled" : "";
-        html += `<label><input type="checkbox" ${checked} ${disabled} onchange="toggle('${dateStr}', ${i})"> ${item}</label>`;
+
+      items.forEach((item, idx) => {
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.disabled = (dateStr !== todayStr);
+        checkbox.checked = localStorage.getItem(`${dateStr}-${idx}`) === "true";
+        checkbox.onchange = () => {
+          localStorage.setItem(`${dateStr}-${idx}`, checkbox.checked);
+          updateCompletionStatus(dateStr);
+        };
+
+        const label = document.createElement("label");
+        label.className = "checkbox";
+        label.appendChild(checkbox);
+        label.append(` ${item}`);
+
+        container.appendChild(label);
+        container.appendChild(document.createElement("br"));
       });
-      detail.innerHTML = html;
     }
 
-    function toggle(dateStr, index) {
-      if (!completion[dateStr]) completion[dateStr] = [];
-      const idx = completion[dateStr].indexOf(index);
-      if (idx === -1) completion[dateStr].push(index);
-      else completion[dateStr].splice(idx, 1);
-      localStorage.setItem("completion", JSON.stringify(completion));
-      renderCalendar();
-      renderDetail(dateStr);
+    function updateCompletionStatus(dateStr) {
+      const items = workouts[dateStr];
+      if (!items) return;
+
+      const all = items.map((_, i) => localStorage.getItem(`${dateStr}-${i}`));
+      let status = "incomplete";
+      if (all.every(v => v === "true")) status = "completed";
+      else if (all.some(v => v === "true")) status = "in-progress";
+      localStorage.setItem(dateStr, status);
+
+      renderCalendar(currentMonth, currentYear);
     }
 
-    renderCalendar();
-    renderDetail();
+    function changeMonth(offset) {
+      currentMonth += offset;
+      if (currentMonth > 11) {
+        currentMonth = 0;
+        currentYear++;
+      } else if (currentMonth < 0) {
+        currentMonth = 11;
+        currentYear--;
+      }
+      renderCalendar(currentMonth, currentYear);
+    }
+
+    renderCalendar(currentMonth, currentYear);
+    showWorkoutDetails(formatDate(new Date()));
   </script>
 </body>
 </html>
