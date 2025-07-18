@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -7,10 +8,10 @@
     body { font-family: Arial; background: #f2f2f2; margin: 0; padding: 1rem; text-align: center; }
     h1 { margin-bottom: 10px; }
     #month-nav { margin-bottom: 1rem; }
-    .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; max-width: 900px; margin: auto; }
+    .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; max-width: 1000px; margin: auto; }
     .day {
-      background: #fff; border: 2px solid #ccc; padding: 10px; border-radius: 6px;
-      cursor: pointer; transition: 0.2s;
+      background: #fff; border: 2px solid #ccc; padding: 6px; border-radius: 6px;
+      cursor: pointer; transition: 0.2s; font-size: 14px; min-height: 60px;
     }
     .today { border: 2px solid black; }
     .completed { background-color: #c8f7c5; }
@@ -18,7 +19,7 @@
     .in-progress { background-color: #fff3b0; }
     .workout-container {
       margin-top: 20px; text-align: left; background: #fff; padding: 20px; border-radius: 8px;
-      max-width: 500px; margin-left: auto; margin-right: auto;
+      max-width: 600px; margin-left: auto; margin-right: auto;
     }
     .checkbox { margin: 5px 0; }
   </style>
@@ -40,7 +41,6 @@
     let currentMonth = new Date().getMonth();
     let currentYear = new Date().getFullYear();
 
-    // ❗ Zaman dilimi uyumlu tarih
     function formatDate(date) {
       const offsetDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
       return offsetDate.toISOString().split('T')[0];
@@ -76,6 +76,12 @@
 
       const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
       monthYearText.textContent = `${monthNames[month]} ${year}`;
+
+      const startDay = date.getDay();
+      for (let i = 0; i < startDay; i++) {
+        const emptyCell = document.createElement('div');
+        calendar.appendChild(emptyCell);
+      }
 
       while (date.getMonth() === month) {
         const dateStr = formatDate(date);
