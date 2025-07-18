@@ -40,8 +40,10 @@
     let currentMonth = new Date().getMonth();
     let currentYear = new Date().getFullYear();
 
+    // ❗ Zaman dilimi uyumlu tarih
     function formatDate(date) {
-      return date.toISOString().split('T')[0];
+      const offsetDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+      return offsetDate.toISOString().split('T')[0];
     }
 
     async function fetchData() {
