@@ -1,14 +1,15 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Zıplama Antrenman Takvimi</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f6f6f6;
+      background: #f7f7f7;
       margin: 0;
-      padding: 20px;
+      padding: 2rem;
     }
     h1 {
       text-align: center;
@@ -16,133 +17,118 @@
     .calendar {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
-      gap: 5px;
+      gap: 0.5rem;
       max-width: 1000px;
-      margin: 0 auto;
+      margin: 1rem auto;
     }
     .day {
-      background-color: #fff;
-      padding: 5px;
-      min-height: 80px;
-      border-radius: 6px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      border: 1px solid #ccc;
+      padding: 0.5rem;
+      border-radius: 8px;
+      background: #fff;
+      min-height: 100px;
       cursor: pointer;
-      font-size: 12px;
+      transition: background 0.2s ease-in-out;
     }
     .day.completed {
-      background-color: #b2f2bb;
+      background: #c2f0c2;
     }
     .day.incomplete {
-      background-color: #ffa8a8;
+      background: #ffc0c0;
     }
     .day.inprogress {
-      background-color: #ffe066;
+      background: #fffac0;
     }
-    .popup {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
+    .day.today {
+      border: 2px solid #000;
+    }
+    .detail {
+      max-width: 800px;
+      margin: 1rem auto;
+      padding: 1rem;
       background: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.3);
-      max-width: 400px;
-      display: none;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
-    .popup h2 {
-      margin-top: 0;
-    }
-    .close-btn {
-      background: crimson;
-      color: white;
-      border: none;
-      padding: 5px 10px;
-      float: right;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    .checkboxes label {
+    label {
       display: block;
-      margin-bottom: 5px;
+      margin: 0.5rem 0;
     }
   </style>
 </head>
 <body>
-<h1>Zıplama Antrenman Takvimi</h1>
-<div class="calendar" id="calendar"></div>
-<div class="popup" id="popup">
-  <button class="close-btn" onclick="closePopup()">Kapat</button>
-  <h2 id="popupDate"></h2>
-  <form id="form">
-    <div class="checkboxes" id="checkboxes"></div>
-  </form>
-</div>
-<script>
-const program = {
-  "2025-07-15": ["Barfiks", "Dumbbell Row", "Plank"],
-  "2025-07-16": ["Bulgarian Split Squat", "Jump Squat", "Calf Raise", "Bench Press", "Incline Dumbbell Press"],
-  "2025-07-17": ["Dumbbell Bench Press", "Lateral Raise", "Push-up"],
-  "2025-07-18": ["Barbell Deadlift", "Hip Thrust", "Jumping Lunges"],
-  "2025-07-19": ["Overhead Press", "Front Raise", "Side Plank"],
-  "2025-07-20": ["Box Jump", "Single Leg Jump", "Wall Sit"],
-  "2025-07-21": ["İstirahat / Aktif Dinlenme"]
-};
-const today = new Date().toISOString().split('T')[0];
-const calendar = document.getElementById("calendar");
-const popup = document.getElementById("popup");
-const popupDate = document.getElementById("popupDate");
-const checkboxesDiv = document.getElementById("checkboxes");
+  <h1>Zıplama Antrenman Takvimi</h1>
+  <div class="calendar" id="calendar"></div>
+  <div class="detail" id="detail"></div>
 
-for (let i = 1; i <= 31; i++) {
-  const date = `2025-07-${i.toString().padStart(2, '0')}`;
-  const div = document.createElement("div");
-  div.classList.add("day");
-  div.textContent = `${i} Temmuz`;
-  if (program[date]) {
-    const done = localStorage.getItem(date + "_done") || "[]";
-    const completed = JSON.parse(done);
-    if (completed.length === program[date].length) {
-      div.classList.add("completed");
-    } else if (completed.length > 0) {
-      div.classList.add("inprogress");
-    } else {
-      div.classList.add("incomplete");
-    }
-  }
-  if (program[date]) {
-    div.onclick = () => {
-      if (date !== today) return;
-      popup.style.display = "block";
-      popupDate.textContent = `${date} Antrenmanı`;
-      checkboxesDiv.innerHTML = "";
-      const done = JSON.parse(localStorage.getItem(date + "_done") || "[]");
-      program[date].forEach((item, idx) => {
-        const label = document.createElement("label");
-        const checkbox = document.createElement("input");
-        checkbox.type = "checkbox";
-        checkbox.checked = done.includes(idx);
-        checkbox.onchange = () => {
-          if (checkbox.checked) {
-            done.push(idx);
-          } else {
-            const index = done.indexOf(idx);
-            if (index > -1) done.splice(index, 1);
-          }
-          localStorage.setItem(date + "_done", JSON.stringify(done));
-          location.reload();
-        };
-        label.appendChild(checkbox);
-        label.append(" " + item);
-        checkboxesDiv.appendChild(label);
-      });
+  <script>
+    const program = {
+      "2025-07-15": ["Barfiks", "Dumbbell Row", "Plank"],
+      "2025-07-16": ["Bulgarian Split Squat", "Jump Squat", "Calf Raise", "Incline Dumbbell Press", "Chest Fly"],
+      "2025-07-17": ["Dumbbell Bench Press", "Lateral Raise", "Push-up"],
+      "2025-07-18": ["Barbell Deadlift", "Hip Thrust", "Jumping Lunges"],
+      "2025-07-19": ["Overhead Press", "Front Raise", "Side Plank"],
+      "2025-07-20": ["Box Jump", "Single Leg Jump", "Wall Sit"],
+      "2025-07-21": ["İstirahat / Aktif Dinlenme"]
     };
-  }
-  calendar.appendChild(div);
-}
-function closePopup() {
-  popup.style.display = "none";
-}
-</script>
+
+    const completion = JSON.parse(localStorage.getItem("completion") || "{}");
+    const todayStr = new Date().toISOString().slice(0, 10);
+
+    function renderCalendar() {
+      const calendar = document.getElementById("calendar");
+      calendar.innerHTML = "";
+      const start = new Date("2025-07-01");
+      for (let i = 0; i < 31; i++) {
+        const date = new Date(start);
+        date.setDate(start.getDate() + i);
+        const dateStr = date.toISOString().slice(0, 10);
+        const div = document.createElement("div");
+        div.className = "day";
+        div.textContent = date.toLocaleDateString("tr-TR", { day: 'numeric', month: 'long' });
+
+        if (dateStr === todayStr) div.classList.add("today");
+        if (completion[dateStr]?.length === (program[dateStr]?.length || 0)) {
+          div.classList.add("completed");
+        } else if (completion[dateStr]?.length > 0) {
+          div.classList.add("inprogress");
+        } else if (completion[dateStr]) {
+          div.classList.add("incomplete");
+        }
+
+        div.addEventListener("click", () => renderDetail(dateStr));
+        calendar.appendChild(div);
+      }
+    }
+
+    function renderDetail(dateStr = todayStr) {
+      const detail = document.getElementById("detail");
+      const list = program[dateStr];
+      if (!list) {
+        detail.innerHTML = `<strong>${dateStr}</strong><p>Program yok</p>`;
+        return;
+      }
+      let html = `<h3>${dateStr} Antrenmanı</h3>`;
+      list.forEach((item, i) => {
+        const checked = completion[dateStr]?.includes(i) ? "checked" : "";
+        const disabled = dateStr !== todayStr ? "disabled" : "";
+        html += `<label><input type="checkbox" ${checked} ${disabled} onchange="toggle('${dateStr}', ${i})"> ${item}</label>`;
+      });
+      detail.innerHTML = html;
+    }
+
+    function toggle(dateStr, index) {
+      if (!completion[dateStr]) completion[dateStr] = [];
+      const idx = completion[dateStr].indexOf(index);
+      if (idx === -1) completion[dateStr].push(index);
+      else completion[dateStr].splice(idx, 1);
+      localStorage.setItem("completion", JSON.stringify(completion));
+      renderCalendar();
+      renderDetail(dateStr);
+    }
+
+    renderCalendar();
+    renderDetail();
+  </script>
 </body>
 </html>
