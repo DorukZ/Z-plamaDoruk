@@ -52,7 +52,7 @@
       left: 0;
       width: 100vw;
       height: 100vh;
-      z-index: 0;
+      z-index: -1;
       pointer-events: none;
     }
   </style>
@@ -73,94 +73,6 @@
   <div class="workout-container" id="workout-details">Gün bilgisi yüklenecek...</div>
 
   <script>
-    const canvas = document.getElementById('bgCanvas');
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    let particles = [];
-    const num = 100;
-    const mouse = { x: null, y: null, radius: 100 };
-
-    window.addEventListener('mousemove', e => {
-      mouse.x = e.x;
-      mouse.y = e.y;
-    });
-
-    window.addEventListener('resize', () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      initParticles();
-    });
-
-    function Particle() {
-      this.x = Math.random() * canvas.width;
-      this.y = Math.random() * canvas.height;
-      this.vx = (Math.random() - 0.5) * 1;
-      this.vy = (Math.random() - 0.5) * 1;
-      this.size = 2;
-    }
-
-    Particle.prototype.draw = function () {
-      ctx.beginPath();
-      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-      ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--text');
-      ctx.fill();
-    };
-
-    Particle.prototype.update = function () {
-      this.x += this.vx;
-      this.y += this.vy;
-      const dx = this.x - mouse.x;
-      const dy = this.y - mouse.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist < mouse.radius) {
-        this.vx += dx / dist * 0.05;
-        this.vy += dy / dist * 0.05;
-      }
-      if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
-      if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
-    };
-
-    function initParticles() {
-      particles = [];
-      for (let i = 0; i < num; i++) particles.push(new Particle());
-    }
-
-    function connectParticles() {
-      for (let a = 0; a < particles.length; a++) {
-        for (let b = a + 1; b < particles.length; b++) {
-          let dx = particles[a].x - particles[b].x;
-          let dy = particles[a].y - particles[b].y;
-          let distance = Math.sqrt(dx * dx + dy * dy);
-
-          if (distance < 120) {
-            let opacity = 1 - distance / 120;
-            ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--text');
-            ctx.globalAlpha = opacity;
-            ctx.lineWidth = 0.5;
-            ctx.beginPath();
-            ctx.moveTo(particles[a].x, particles[a].y);
-            ctx.lineTo(particles[b].x, particles[b].y);
-            ctx.stroke();
-            ctx.globalAlpha = 1;
-          }
-        }
-      }
-    }
-
-    function animate() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      particles.forEach(p => {
-        p.update();
-        p.draw();
-      });
-      connectParticles();
-      requestAnimationFrame(animate);
-    }
-
-    initParticles();
-    animate();
-
     const binId = '687a13b96213bd325afbbe5e';
     const apiKey = '$2a$10$sNHjrdpRXLmd4/CDDtyxZOsljKtoyVaXwUTlb4/GSqVxF.XyAwfj2';
     let jsonData = {};
@@ -208,6 +120,7 @@
         const dayEl = document.createElement('div');
         dayEl.className = 'day';
         dayEl.textContent = date.getDate();
+
         if (dateStr === todayStr) dayEl.classList.add('today');
         if (dateStr < todayStr) dayEl.classList.add('past-day');
 
@@ -251,13 +164,14 @@
         label.className = "checkbox";
         label.appendChild(checkbox);
         label.append(` ${exercise.name}`);
+
         container.appendChild(label);
         container.appendChild(document.createElement("br"));
       });
     }
 
     function changeMonth(offset) {
-      const validMonths = [6, 7, 8]; // Temmuz, Ağustos, Eylül
+      const validMonths = [6, 7, 8];
       let next = currentMonth + offset;
       if (!validMonths.includes(next)) return;
       currentMonth = next;
@@ -269,6 +183,94 @@
     }
 
     fetchData();
+
+    // Background particle animation
+    const canvas = document.getElementById('bgCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    let particles = [];
+    const num = 100;
+    const mouse = { x: null, y: null, radius: 100 };
+
+    window.addEventListener('mousemove', e => {
+      mouse.x = e.x;
+      mouse.y = e.y;
+    });
+
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+
+    function Particle() {
+      this.x = Math.random() * canvas.width;
+      this.y = Math.random() * canvas.height;
+      this.vx = (Math.random() - 0.5) * 1;
+      this.vy = (Math.random() - 0.5) * 1;
+      this.size = 2;
+    }
+
+    Particle.prototype.draw = function () {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--text');
+      ctx.fill();
+    };
+
+    Particle.prototype.update = function () {
+      this.x += this.vx;
+      this.y += this.vy;
+
+      const dx = this.x - mouse.x;
+      const dy = this.y - mouse.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < mouse.radius) {
+        const angle = Math.atan2(dy, dx);
+        this.x += Math.cos(angle) * 2;
+        this.y += Math.sin(angle) * 2;
+      }
+
+      if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+      if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+    };
+
+    function initParticles() {
+      particles = [];
+      for (let i = 0; i < num; i++) particles.push(new Particle());
+    }
+
+    function connectParticles() {
+      for (let a = 0; a < particles.length; a++) {
+        for (let b = a + 1; b < particles.length; b++) {
+          let dx = particles[a].x - particles[b].x;
+          let dy = particles[a].y - particles[b].y;
+          let distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance < 120) {
+            ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--text');
+            ctx.lineWidth = 0.5;
+            ctx.beginPath();
+            ctx.moveTo(particles[a].x, particles[a].y);
+            ctx.lineTo(particles[b].x, particles[b].y);
+            ctx.stroke();
+          }
+        }
+      }
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => {
+        p.update();
+        p.draw();
+      });
+      connectParticles();
+      requestAnimationFrame(animate);
+    }
+
+    initParticles();
+    animate();
   </script>
 </body>
 </html>
