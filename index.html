@@ -38,7 +38,7 @@
     const binId = '687a13b96213bd325afbbe5e';
     const apiKey = '$2a$10$sNHjrdpRXLmd4/CDDtyxZOsljKtoyVaXwUTlb4/GSqVxF.XyAwfj2';
     let jsonData = {};
-    let currentMonth = new Date().getMonth();
+    let currentMonth = Math.min(8, Math.max(6, new Date().getMonth()));
     let currentYear = new Date().getFullYear();
 
     function formatDate(date) {
