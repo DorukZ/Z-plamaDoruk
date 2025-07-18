@@ -44,21 +44,20 @@
     }
     .toggle-mode {
       position: fixed; top: 10px; right: 10px; background: var(--card); border: 1px solid var(--border);
-      color: var(--text); padding: 5px 10px; border-radius: 4px; cursor: pointer; z-index: 2;
+      color: var(--text); padding: 5px 10px; border-radius: 4px; cursor: pointer;
     }
-    #bgCanvas {
+    #particles-js {
       position: fixed;
       top: 0;
       left: 0;
       width: 100vw;
       height: 100vh;
-      z-index: 0;
-      pointer-events: none;
+      z-index: -1;
     }
   </style>
 </head>
 <body>
-  <canvas id="bgCanvas"></canvas>
+  <div id="particles-js"></div>
   <button class="toggle-mode" onclick="toggleDarkMode()">🌙</button>
   <h1>Zıplama Antrenman Takvimi</h1>
   <div id="month-nav">
@@ -72,7 +71,46 @@
   <div class="calendar" id="calendar"></div>
   <div class="workout-container" id="workout-details">Gün bilgisi yüklenecek...</div>
 
+  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
   <script>
+    particlesJS("particles-js", {
+      particles: {
+        number: { value: 60, density: { enable: true, value_area: 800 } },
+        color: { value: "#ffffff" },
+        shape: { type: "circle" },
+        opacity: { value: 0.3 },
+        size: { value: 3, random: true },
+        line_linked: {
+          enable: true,
+          distance: 150,
+          color: "#ffffff",
+          opacity: 0.2,
+          width: 1
+        },
+        move: {
+          enable: true,
+          speed: 1.2,
+          direction: "none",
+          random: false,
+          straight: false,
+          out_mode: "out",
+          bounce: false
+        }
+      },
+      interactivity: {
+        detect_on: "canvas",
+        events: {
+          onhover: { enable: true, mode: "grab" },
+          onclick: { enable: false },
+          resize: true
+        },
+        modes: {
+          grab: { distance: 140, line_linked: { opacity: 0.5 } }
+        }
+      },
+      retina_detect: true
+    });
+
     const binId = '687a13b96213bd325afbbe5e';
     const apiKey = '$2a$10$sNHjrdpRXLmd4/CDDtyxZOsljKtoyVaXwUTlb4/GSqVxF.XyAwfj2';
     let jsonData = {};
@@ -192,55 +230,6 @@
     }
 
     fetchData();
-
-    // Fancy background line effect
-    const canvas = document.getElementById('bgCanvas');
-    const ctx = canvas.getContext('2d');
-    let width = window.innerWidth;
-    let height = window.innerHeight;
-    canvas.width = width;
-    canvas.height = height;
-
-    window.addEventListener('resize', () => {
-      width = window.innerWidth;
-      height = window.innerHeight;
-      canvas.width = width;
-      canvas.height = height;
-    });
-
-    let lines = [];
-    for (let i = 0; i < 30; i++) {
-      lines.push({
-        x: Math.random() * width,
-        y: Math.random() * height,
-        length: 100 + Math.random() * 100,
-        speed: 0.2 + Math.random() * 0.5,
-        angle: Math.random() * 360
-      });
-    }
-
-    function drawLines() {
-      ctx.clearRect(0, 0, width, height);
-      ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
-      ctx.lineWidth = 1;
-      for (let l of lines) {
-        ctx.beginPath();
-        ctx.moveTo(l.x, l.y);
-        ctx.lineTo(l.x + Math.cos(l.angle) * l.length, l.y + Math.sin(l.angle) * l.length);
-        ctx.stroke();
-
-        l.x += Math.cos(l.angle) * l.speed;
-        l.y += Math.sin(l.angle) * l.speed;
-
-        if (l.x > width || l.y > height || l.x < 0 || l.y < 0) {
-          l.x = Math.random() * width;
-          l.y = Math.random() * height;
-        }
-      }
-      requestAnimationFrame(drawLines);
-    }
-
-    drawLines();
   </script>
 </body>
 </html>
