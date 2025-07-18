@@ -192,6 +192,22 @@
     }
 
     fetchData();
+
+    // Mouse hareketine duyarlı arkaplan
+    const canvas = document.getElementById('bgCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    document.addEventListener('mousemove', (e) => {
+      const x = e.clientX;
+      const y = e.clientY;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.beginPath();
+      ctx.arc(x, y, 40, 0, 2 * Math.PI);
+      ctx.fillStyle = 'rgba(0, 150, 255, 0.1)';
+      ctx.fill();
+    });
   </script>
 </body>
 </html>
