@@ -1,10 +1,11 @@
 
 <!DOCTYPE html>
+
 <html lang="tr">
 <head>
-  <meta charset="UTF-8" />
-  <title>Zıplama Antrenman Takvimi</title>
-  <style>
+<meta charset="utf-8"/>
+<title>Zıplama Antrenman Takvimi</title>
+<style>
     body { font-family: Arial; background: #f2f2f2; margin: 0; padding: 1rem; text-align: center; }
     h1 { margin-bottom: 10px; }
     #month-nav { margin-bottom: 1rem; }
@@ -25,16 +26,15 @@
   </style>
 </head>
 <body>
-  <h1>Zıplama Antrenman Takvimi</h1>
-  <div id="month-nav">
-    <button onclick="changeMonth(-1)">←</button>
-    <span id="month-year">Yükleniyor...</span>
-    <button onclick="changeMonth(1)">→</button>
-  </div>
-  <div class="calendar" id="calendar"></div>
-  <div class="workout-container" id="workout-details">Gün bilgisi yüklenecek...</div>
-
-  <script>
+<h1>Zıplama Antrenman Takvimi</h1>
+<div id="month-nav">
+<button onclick="changeMonth(-1)">←</button>
+<span id="month-year">Yükleniyor...</span>
+<button onclick="changeMonth(1)">→</button>
+</div>
+<div class="calendar" id="calendar"></div>
+<div class="workout-container" id="workout-details">Gün bilgisi yüklenecek...</div>
+<script>
     const binId = '687a13b96213bd325afbbe5e';
     const apiKey = '$2a$10$sNHjrdpRXLmd4/CDDtyxZOsljKtoyVaXwUTlb4/GSqVxF.XyAwfj2';
     let jsonData = {};
@@ -137,6 +137,11 @@
     }
 
     function changeMonth(offset) {
+      const newMonth = currentMonth + offset;
+      if (newMonth < 6 || newMonth > 8) return;
+      currentMonth = newMonth;
+      renderCalendar(currentMonth, currentYear);
+    }
       currentMonth += offset;
       if (currentMonth > 11) {
         currentMonth = 0;
