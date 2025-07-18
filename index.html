@@ -1,79 +1,79 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Zıplama Antrenman Takvimi</title>
+  <meta charset="UTF-8">
+  <title>Antrenman Takvimi</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
-    body { font-family: Arial; background: #f8f9fa; margin: 2rem; }
-    h1 { text-align: center; }
-    .calendar { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
-    .day-box {
-      width: 120px; padding: 10px; border-radius: 10px;
-      text-align: center; border: 1px solid #ccc;
-      transition: 0.3s; cursor: pointer;
+    body {
+      font-family: sans-serif;
+      background: #f2f2f2;
+      padding: 20px;
     }
-    .green { background: #c8f7c5; }
-    .red { background: #f7c5c5; }
-    .yellow { background: #fff5c2; }
+    h1 {
+      text-align: center;
+    }
+    #takvim {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 10px;
+      max-width: 800px;
+      margin: auto;
+    }
+    .gun {
+      background: #eee;
+      padding: 10px;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: bold;
+    }
+    .yesil { background-color: #a3e635; } /* tamamlandı */
+    .kirmizi { background-color: #f87171; } /* yapılmadı */
+    .sari { background-color: #facc15; } /* bugün */
   </style>
 </head>
 <body>
   <h1>Antrenman Takvimi</h1>
-  <div id="takvim" class="calendar"></div>
+  <div id="takvim">Yükleniyor...</div>
 
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+  <script>
+    const SUPABASE_URL = 'https://drnvqepwzzhsghidavap.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRybnZxZXB3enpoc2doaWRhdmFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI3OTYwMTgsImV4cCI6MjA2ODM3MjAxOH0.i5TNqyZNajuoPFejMaG1BVA-SFOfVfV5aUgCgEEm6nw';
 
-    const supabase = createClient(
-      'https://drnvqepwzzhsghidavap.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRybnZxZXB3enpoc2doaWRhdmFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI3OTYwMTgsImV4cCI6MjA2ODM3MjAxOH0.i5TNqyZNajuoPFejMaG1BVA-SFOfVfV5aUgCgEEm6nw'
-    );
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    const cihaz_id = localStorage.getItem("cihaz_id") || crypto.randomUUID();
-    localStorage.setItem("cihaz_id", cihaz_id);
-
-    const takvimEl = document.getElementById("takvim");
-    const bugun = new Date().toISOString().slice(0, 10);
-
-    const renkBelirle = (tarih, tamamlandi) => {
-      if (tarih < bugun && !tamamlandi) return "red";
-      if (tarih === bugun && !tamamlandi) return "yellow";
-      if (tamamlandi) return "green";
-      return "";
-    };
-
-    async function veriGetir() {
-      const { data, error } = await supabase
-        .from("antrenmanlar")
-        .select("*")
-        .eq("cihaz_id", cihaz_id)
-        .order("tarih", { ascending: true });
+    async function takvimiYukle() {
+      const { data, error } = await supabase.from('program').select('*').order('tarih', { ascending: true });
+      const container = document.getElementById('takvim');
+      container.innerHTML = '';
 
       if (error) {
-        takvimEl.innerHTML = "<p>Veri alınamadı.</p>";
+        container.innerHTML = 'Veri alınamadı.';
+        console.error(error);
         return;
       }
 
+      const bugunStr = new Date().toISOString().split('T')[0];
+
       data.forEach(gun => {
-        const div = document.createElement("div");
-        div.className = `day-box ${renkBelirle(gun.tarih, gun.tamamlandi)}`;
+        const div = document.createElement('div');
+        div.classList.add('gun');
+
+        if (gun.tarih === bugunStr) {
+          div.classList.add('sari');
+        } else if (gun.tamamlandi) {
+          div.classList.add('yesil');
+        } else {
+          div.classList.add('kirmizi');
+        }
+
         div.textContent = gun.tarih;
-        div.onclick = () => tamamla(gun.tarih, !gun.tamamlandi);
-        takvimEl.appendChild(div);
+        container.appendChild(div);
       });
     }
 
-    async function tamamla(tarih, durum) {
-      await supabase
-        .from("antrenmanlar")
-        .update({ tamamlandi: durum })
-        .eq("tarih", tarih)
-        .eq("cihaz_id", cihaz_id);
-      location.reload();
-    }
-
-    veriGetir();
+    takvimiYukle();
   </script>
 </body>
 </html>
