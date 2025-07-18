@@ -18,16 +18,36 @@
       --border: #444;
     }
     body {
-      font-family: Arial; background: var(--bg); margin: 0; padding: 1rem; text-align: center; color: var(--text); transition: background 0.3s, color 0.3s;
+      font-family: Arial;
+      background: var(--bg);
+      margin: 0;
+      padding: 1rem;
+      text-align: center;
+      color: var(--text);
+      transition: background 0.3s, color 0.3s;
     }
     h1 { margin-bottom: 10px; }
-    #month-nav { margin-bottom: 1rem; display: flex; justify-content: center; align-items: center; gap: 10px; }
+    #month-nav {
+      margin-bottom: 1rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+    }
     .calendar {
-      display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; max-width: 900px; margin: auto;
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 10px;
+      max-width: 900px;
+      margin: auto;
     }
     .day {
-      background: var(--card); border: 2px solid var(--border); padding: 10px; border-radius: 6px;
-      cursor: pointer; transition: 0.2s;
+      background: var(--card);
+      border: 2px solid var(--border);
+      padding: 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: 0.2s;
     }
     .today { border: 2px solid black; }
     .completed { background-color: #c8f7c5; }
@@ -35,16 +55,36 @@
     .in-progress { background-color: #fff3b0; }
     .past-day:not(.today) { opacity: 0.5; }
     .workout-container {
-      margin-top: 20px; text-align: left; background: var(--card); padding: 20px; border-radius: 8px;
-      max-width: 500px; margin-left: auto; margin-right: auto; border: 1px solid var(--border);
+      margin-top: 20px;
+      text-align: left;
+      background: var(--card);
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 500px;
+      margin-left: auto;
+      margin-right: auto;
+      border: 1px solid var(--border);
     }
     .checkbox { margin: 5px 0; }
     #days-header {
-      display: grid; grid-template-columns: repeat(7, 1fr); max-width: 900px; margin: auto; font-weight: bold; margin-bottom: 10px;
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      max-width: 900px;
+      margin: auto;
+      font-weight: bold;
+      margin-bottom: 10px;
     }
     .toggle-mode {
-      position: fixed; top: 10px; right: 10px; background: var(--card); border: 1px solid var(--border);
-      color: var(--text); padding: 5px 10px; border-radius: 4px; cursor: pointer; z-index: 2;
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      z-index: 2;
     }
     #bgCanvas {
       position: fixed;
@@ -52,7 +92,7 @@
       left: 0;
       width: 100vw;
       height: 100vh;
-      z-index: 0;
+      z-index: -1;
       pointer-events: none;
     }
   </style>
@@ -73,109 +113,6 @@
   <div class="workout-container" id="workout-details">Gün bilgisi yüklenecek...</div>
 
   <script>
-    const binId = '687a13b96213bd325afbbe5e';
-    const apiKey = '$2a$10$sNHjrdpRXLmd4/CDDtyxZOsljKtoyVaXwUTlb4/GSqVxF.XyAwfj2';
-    let jsonData = {};
-    let currentMonth = new Date().getMonth();
-    let currentYear = new Date().getFullYear();
-
-    function formatDate(date) {
-      const offsetDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-      return offsetDate.toISOString().split('T')[0];
-    }
-
-    async function fetchData() {
-      const res = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
-        headers: { 'X-Master-Key': apiKey }
-      });
-      const data = await res.json();
-      jsonData = data.record;
-      renderCalendar(currentMonth, currentYear);
-      showWorkoutDetails(formatDate(new Date()));
-    }
-
-    async function saveData() {
-      await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Master-Key': apiKey
-        },
-        body: JSON.stringify(jsonData)
-      });
-    }
-
-    function renderCalendar(month, year) {
-      const calendar = document.getElementById('calendar');
-      const monthYearText = document.getElementById('month-year');
-      calendar.innerHTML = '';
-      const date = new Date(year, month, 1);
-      const todayStr = formatDate(new Date());
-      const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül"];
-      monthYearText.textContent = `${monthNames[month]} ${year}`;
-
-      while (date.getMonth() === month) {
-        const dateStr = formatDate(date);
-        const dayEl = document.createElement('div');
-        dayEl.className = 'day';
-        dayEl.textContent = date.getDate();
-        if (dateStr === todayStr) dayEl.classList.add('today');
-        if (dateStr < todayStr) dayEl.classList.add('past-day');
-        const entry = jsonData[dateStr];
-        if (entry) {
-          const doneCount = entry.exercises.filter(e => e.done).length;
-          if (doneCount === 0) dayEl.classList.add('incomplete');
-          else if (doneCount < entry.exercises.length) dayEl.classList.add('in-progress');
-          else dayEl.classList.add('completed');
-        }
-        dayEl.onclick = () => showWorkoutDetails(dateStr);
-        calendar.appendChild(dayEl);
-        date.setDate(date.getDate() + 1);
-      }
-    }
-
-    function showWorkoutDetails(dateStr) {
-      const container = document.getElementById('workout-details');
-      const todayStr = formatDate(new Date());
-      const entry = jsonData[dateStr];
-      container.innerHTML = `<h3>${dateStr} Antrenmanı</h3>`;
-      if (!entry) {
-        container.innerHTML += `<p>Bu tarihte antrenman yok.</p>`;
-        return;
-      }
-      entry.exercises.forEach((exercise, idx) => {
-        const checkbox = document.createElement("input");
-        checkbox.type = "checkbox";
-        checkbox.disabled = (dateStr !== todayStr);
-        checkbox.checked = exercise.done;
-        checkbox.onchange = async () => {
-          exercise.done = checkbox.checked;
-          await saveData();
-          renderCalendar(currentMonth, currentYear);
-        };
-        const label = document.createElement("label");
-        label.className = "checkbox";
-        label.appendChild(checkbox);
-        label.append(` ${exercise.name}`);
-        container.appendChild(label);
-        container.appendChild(document.createElement("br"));
-      });
-    }
-
-    function changeMonth(offset) {
-      const validMonths = [6, 7, 8];
-      let next = currentMonth + offset;
-      if (!validMonths.includes(next)) return;
-      currentMonth = next;
-      renderCalendar(currentMonth, currentYear);
-    }
-
-    function toggleDarkMode() {
-      document.body.classList.toggle('dark');
-    }
-
-    fetchData();
-
     const canvas = document.getElementById('bgCanvas');
     const ctx = canvas.getContext('2d');
     canvas.width = window.innerWidth;
@@ -188,6 +125,7 @@
       mouse.x = e.x;
       mouse.y = e.y;
     });
+
     window.addEventListener('resize', () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
@@ -196,17 +134,28 @@
     function Particle() {
       this.x = Math.random() * canvas.width;
       this.y = Math.random() * canvas.height;
-      this.vx = (Math.random() - 0.5) * 1;
-      this.vy = (Math.random() - 0.5) * 1;
+      this.vx = (Math.random() - 0.5) * 0.8;
+      this.vy = (Math.random() - 0.5) * 0.8;
       this.size = 2;
     }
+
     Particle.prototype.draw = function () {
       ctx.beginPath();
       ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
       ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--text');
       ctx.fill();
     };
+
     Particle.prototype.update = function () {
+      const dx = this.x - mouse.x;
+      const dy = this.y - mouse.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < mouse.radius) {
+        const angle = Math.atan2(dy, dx);
+        const repelForce = (mouse.radius - dist) / mouse.radius;
+        this.x += Math.cos(angle) * repelForce * 4;
+        this.y += Math.sin(angle) * repelForce * 4;
+      }
       this.x += this.vx;
       this.y += this.vy;
       if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
@@ -224,15 +173,8 @@
           let dx = particles[a].x - particles[b].x;
           let dy = particles[a].y - particles[b].y;
           let distance = Math.sqrt(dx * dx + dy * dy);
-
           if (distance < 120) {
             let opacity = 1 - distance / 120;
-            if (mouse.x && mouse.y) {
-              let mx = particles[a].x - mouse.x;
-              let my = particles[a].y - mouse.y;
-              let mouseDist = Math.sqrt(mx * mx + my * my);
-              if (mouseDist < mouse.radius) continue;
-            }
             ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--text');
             ctx.lineWidth = 0.5;
             ctx.beginPath();
@@ -243,6 +185,7 @@
         }
       }
     }
+
     function animate() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       particles.forEach(p => {
@@ -252,6 +195,11 @@
       connectParticles();
       requestAnimationFrame(animate);
     }
+
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark');
+    }
+
     initParticles();
     animate();
   </script>
