@@ -2,212 +2,151 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Zıplama Antrenman Takvimi</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --bg-color: #f2f2f2;
+      --text-color: #000;
+      --card-bg: #fff;
+    }
+    .dark {
+      --bg-color: #121212;
+      --text-color: #eee;
+      --card-bg: #1e1e1e;
+    }
     body {
-      font-family: 'Inter', sans-serif;
-      background: #f2f2f2;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
       margin: 0;
       padding: 1rem;
+    }
+    .container {
+      max-width: 1000px;
+      margin: auto;
       text-align: center;
     }
-    h1 {
-      margin-bottom: 10px;
-    }
-    #month-nav {
-      margin-bottom: 1rem;
-    }
+    h1 { margin-bottom: 10px; }
+    #month-nav { margin-bottom: 1rem; }
     .calendar {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
-      gap: 10px;
-      max-width: 900px;
-      margin: auto;
+      gap: 6px;
     }
     .day {
-      background: #fff;
-      border: 2px solid #ccc;
+      background: var(--card-bg);
+      border: 1px solid #ccc;
       padding: 10px;
-      border-radius: 6px;
+      border-radius: 8px;
       cursor: pointer;
       transition: 0.2s;
     }
-    .today {
-      border: 2px solid black;
-    }
-    .completed {
-      background-color: #c8f7c5;
-    }
-    .incomplete {
-      background-color: #f7c5c5;
-    }
-    .in-progress {
-      background-color: #fff3b0;
-    }
-    .past-day {
-      opacity: 0.5;
-    }
+    .day:hover { box-shadow: 0 0 5px rgba(0,0,0,0.2); }
+    .today { border: 2px solid #007bff; }
+    .completed { background-color: #c8f7c5; }
+    .incomplete { background-color: #f7c5c5; }
+    .in-progress { background-color: #fff3b0; }
+    .past-day { opacity: 0.5; }
     .workout-container {
+      background: var(--card-bg);
       margin-top: 20px;
-      text-align: left;
-      background: #fff;
       padding: 20px;
       border-radius: 8px;
-      max-width: 500px;
-      margin-left: auto;
-      margin-right: auto;
+      text-align: left;
     }
     .checkbox { margin: 5px 0; }
-    .weekday-header {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      max-width: 900px;
-      margin: 0 auto 5px;
-      font-weight: bold;
+    #theme-toggle {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: #ddd;
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      font-size: 1.2rem;
+      cursor: pointer;
     }
     @media (max-width: 600px) {
-      .calendar, .weekday-header {
-        grid-template-columns: repeat(7, 1fr);
-        font-size: 0.7rem;
-        gap: 4px;
-      }
-      .day {
-        padding: 6px;
-      }
+      .calendar { grid-template-columns: repeat(7, 1fr); gap: 4px; }
+      .day { padding: 6px; font-size: 0.8rem; }
     }
   </style>
 </head>
 <body>
-  <h1>Zıplama Antrenman Takvimi</h1>
-  <div id="month-nav">
-    <button onclick="changeMonth(-1)">←</button>
-    <span id="month-year">Yükleniyor...</span>
-    <button onclick="changeMonth(1)">→</button>
+  <div class="container">
+    <button id="theme-toggle">🌙</button>
+    <h1>Zıplama Antrenman Takvimi</h1>
+    <div id="month-nav">
+      <button onclick="changeMonth(-1)">←</button>
+      <span id="month-year">Yükleniyor...</span>
+      <button onclick="changeMonth(1)">→</button>
+    </div>
+    <div class="calendar" id="calendar"></div>
+    <div class="workout-container" id="workout-details">Gün bilgisi yüklenecek...</div>
   </div>
-  <div class="weekday-header">
-    <div>Pzt</div><div>Sal</div><div>Çar</div><div>Per</div><div>Cum</div><div>Cmt</div><div>Paz</div>
-  </div>
-  <div class="calendar" id="calendar"></div>
-  <div class="workout-container" id="workout-details">Gün bilgisi yüklenecek...</div>
-
   <script>
-    const binId = '687a13b96213bd325afbbe5e';
-    const apiKey = '$2a$10$sNHjrdpRXLmd4/CDDtyxZOsljKtoyVaXwUTlb4/GSqVxF.XyAwfj2';
-    let jsonData = {};
-    let currentMonth = new Date().getMonth();
-    let currentYear = new Date().getFullYear();
+    const allowedMonths = [6, 7, 8]; // Temmuz (6), Ağustos (7), Eylül (8)
+    let currentDate = new Date();
+    if (!allowedMonths.includes(currentDate.getMonth())) {
+      currentDate = new Date(currentDate.getFullYear(), 6, 1);
+    }
+    let currentMonth = currentDate.getMonth();
+    let currentYear = currentDate.getFullYear();
+
+    document.getElementById('theme-toggle').onclick = () => {
+      document.body.classList.toggle('dark');
+    };
 
     function formatDate(date) {
       const offsetDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
       return offsetDate.toISOString().split('T')[0];
     }
 
-    async function fetchData() {
-      const res = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
-        headers: { 'X-Master-Key': apiKey }
-      });
-      const data = await res.json();
-      jsonData = data.record;
+    function changeMonth(offset) {
+      let nextMonth = currentMonth + offset;
+      if (nextMonth < 6) nextMonth = 8;
+      if (nextMonth > 8) nextMonth = 6;
+      currentMonth = nextMonth;
       renderCalendar(currentMonth, currentYear);
-      showWorkoutDetails(formatDate(new Date()));
-    }
-
-    async function saveData() {
-      await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Master-Key': apiKey
-        },
-        body: JSON.stringify(jsonData)
-      });
     }
 
     function renderCalendar(month, year) {
       const calendar = document.getElementById('calendar');
       const monthYearText = document.getElementById('month-year');
       calendar.innerHTML = '';
-      const date = new Date(year, month, 1);
-      const todayStr = formatDate(new Date());
-
       const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül"];
       monthYearText.textContent = `${monthNames[month]} ${year}`;
 
-      while (date.getMonth() === month) {
-        const dateStr = formatDate(date);
+      const firstDay = new Date(year, month, 1);
+      const todayStr = formatDate(new Date());
+
+      for (let i = 0; i < firstDay.getDay(); i++) {
+        const empty = document.createElement('div');
+        calendar.appendChild(empty);
+      }
+
+      let day = new Date(year, month, 1);
+      while (day.getMonth() === month) {
+        const dateStr = formatDate(day);
         const dayEl = document.createElement('div');
         dayEl.className = 'day';
-        dayEl.textContent = date.getDate();
+        dayEl.textContent = day.getDate();
 
         if (dateStr === todayStr) dayEl.classList.add('today');
-        if (dateStr < todayStr) dayEl.classList.add('past-day');
+        if (new Date(dateStr) < new Date(todayStr)) dayEl.classList.add('past-day');
 
-        const entry = jsonData[dateStr];
-        if (entry) {
-          const doneCount = entry.exercises.filter(e => e.done).length;
-          if (doneCount === 0) dayEl.classList.add('incomplete');
-          else if (doneCount < entry.exercises.length) dayEl.classList.add('in-progress');
-          else dayEl.classList.add('completed');
-        }
-
-        dayEl.onclick = () => showWorkoutDetails(dateStr);
-        calendar.appendChild(dayEl);
-        date.setDate(date.getDate() + 1);
-      }
-    }
-
-    function showWorkoutDetails(dateStr) {
-      const container = document.getElementById('workout-details');
-      const todayStr = formatDate(new Date());
-      const entry = jsonData[dateStr];
-      container.innerHTML = `<h3>${dateStr} Antrenmanı</h3>`;
-
-      if (!entry) {
-        container.innerHTML += `<p>Bu tarihte antrenman yok.</p>`;
-        return;
-      }
-
-      entry.exercises.forEach((exercise, idx) => {
-        const checkbox = document.createElement("input");
-        checkbox.type = "checkbox";
-        checkbox.disabled = (dateStr !== todayStr);
-        checkbox.checked = exercise.done;
-        checkbox.onchange = async () => {
-          exercise.done = checkbox.checked;
-          await saveData();
-          renderCalendar(currentMonth, currentYear);
+        dayEl.onclick = () => {
+          document.getElementById('workout-details').innerHTML = `<h3>${dateStr} Antrenmanı</h3><p>Buraya antrenman bilgileri entegre edilecek.</p>`;
         };
 
-        const label = document.createElement("label");
-        label.className = "checkbox";
-        label.appendChild(checkbox);
-        label.append(` ${exercise.name}`);
-
-        container.appendChild(label);
-        container.appendChild(document.createElement("br"));
-
-        if (exercise.description) {
-          const desc = document.createElement("div");
-          desc.style.fontSize = "0.9rem";
-          desc.style.marginBottom = "10px";
-          desc.style.color = "#666";
-          desc.textContent = exercise.description;
-          container.appendChild(desc);
-        }
-      });
+        calendar.appendChild(dayEl);
+        day.setDate(day.getDate() + 1);
+      }
     }
 
-    function changeMonth(offset) {
-      const validMonths = [6, 7, 8]; // Temmuz, Ağustos, Eylül
-      let next = currentMonth + offset;
-      if (!validMonths.includes(next)) return;
-      currentMonth = next;
-      renderCalendar(currentMonth, currentYear);
-    }
-
-    fetchData();
+    renderCalendar(currentMonth, currentYear);
   </script>
 </body>
 </html>
