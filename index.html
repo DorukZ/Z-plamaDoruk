@@ -1,18 +1,17 @@
 
 <!DOCTYPE html>
-
 <html lang="tr">
 <head>
-<meta charset="utf-8"/>
-<title>Zıplama Antrenman Takvimi</title>
-<style>
+  <meta charset="UTF-8" />
+  <title>Zıplama Antrenman Takvimi</title>
+  <style>
     body { font-family: Arial; background: #f2f2f2; margin: 0; padding: 1rem; text-align: center; }
     h1 { margin-bottom: 10px; }
     #month-nav { margin-bottom: 1rem; }
-    .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; max-width: 1000px; margin: auto; }
+    .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; max-width: 900px; margin: auto; }
     .day {
-      background: #fff; border: 2px solid #ccc; padding: 6px; border-radius: 6px;
-      cursor: pointer; transition: 0.2s; font-size: 14px; min-height: 60px;
+      background: #fff; border: 2px solid #ccc; padding: 10px; border-radius: 6px;
+      cursor: pointer; transition: 0.2s;
     }
     .today { border: 2px solid black; }
     .completed { background-color: #c8f7c5; }
@@ -20,26 +19,28 @@
     .in-progress { background-color: #fff3b0; }
     .workout-container {
       margin-top: 20px; text-align: left; background: #fff; padding: 20px; border-radius: 8px;
-      max-width: 600px; margin-left: auto; margin-right: auto;
+      max-width: 500px; margin-left: auto; margin-right: auto;
     }
     .checkbox { margin: 5px 0; }
   </style>
 </head>
 <body>
-<h1>Zıplama Antrenman Takvimi</h1>
-<div id="month-nav">
-<button onclick="changeMonth(-1)">←</button>
-<span id="month-year">Yükleniyor...</span>
-<button onclick="changeMonth(1)">→</button>
-</div>
-<div class="calendar" id="calendar"></div>
-<div class="workout-container" id="workout-details">Gün bilgisi yüklenecek...</div>
-<script>
+  <h1>Zıplama Antrenman Takvimi</h1>
+  <div id="month-nav">
+    <button onclick="changeMonth(-1)">←</button>
+    <span id="month-year">Yükleniyor...</span>
+    <button onclick="changeMonth(1)">→</button>
+  </div>
+  <div class="calendar" id="calendar"></div>
+  <div class="workout-container" id="workout-details">Gün bilgisi yüklenecek...</div>
+
+  <script>
     const binId = '687a13b96213bd325afbbe5e';
     const apiKey = '$2a$10$sNHjrdpRXLmd4/CDDtyxZOsljKtoyVaXwUTlb4/GSqVxF.XyAwfj2';
     let jsonData = {};
-    let currentMonth = Math.min(8, Math.max(6, new Date().getMonth()));
-    let currentYear = new Date().getFullYear();
+    let currentMonth = 6;
+    let currentYear = 2025;
+    const allowedMonths = [6, 7, 8]; // Temmuz, Ağustos, Eylül
 
     function formatDate(date) {
       const offsetDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
@@ -68,20 +69,16 @@
     }
 
     function renderCalendar(month, year) {
+      if (!allowedMonths.includes(month)) return;
+
       const calendar = document.getElementById('calendar');
       const monthYearText = document.getElementById('month-year');
       calendar.innerHTML = '';
       const date = new Date(year, month, 1);
       const todayStr = formatDate(new Date());
 
-      const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+      const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül"];
       monthYearText.textContent = `${monthNames[month]} ${year}`;
-
-      const startDay = date.getDay();
-      for (let i = 0; i < startDay; i++) {
-        const emptyCell = document.createElement('div');
-        calendar.appendChild(emptyCell);
-      }
 
       while (date.getMonth() === month) {
         const dateStr = formatDate(date);
@@ -89,8 +86,8 @@
         dayEl.className = 'day';
         dayEl.textContent = date.getDate();
         if (dateStr === todayStr) dayEl.classList.add('today');
-        const entry = jsonData[dateStr];
 
+        const entry = jsonData[dateStr];
         if (entry) {
           const doneCount = entry.exercises.filter(e => e.done).length;
           if (doneCount === 0) dayEl.classList.add('incomplete');
@@ -138,19 +135,10 @@
 
     function changeMonth(offset) {
       const newMonth = currentMonth + offset;
-      if (newMonth < 6 || newMonth > 8) return;
-      currentMonth = newMonth;
-      renderCalendar(currentMonth, currentYear);
-    }
-      currentMonth += offset;
-      if (currentMonth > 11) {
-        currentMonth = 0;
-        currentYear++;
-      } else if (currentMonth < 0) {
-        currentMonth = 11;
-        currentYear--;
+      if (allowedMonths.includes(newMonth)) {
+        currentMonth = newMonth;
+        renderCalendar(currentMonth, currentYear);
       }
-      renderCalendar(currentMonth, currentYear);
     }
 
     fetchData();
