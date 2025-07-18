@@ -50,11 +50,10 @@
       position: fixed;
       top: 0;
       left: 0;
-      z-index: 0;
-      pointer-events: none;
       width: 100vw;
       height: 100vh;
-      background: transparent;
+      z-index: -1;
+      pointer-events: none;
     }
   </style>
 </head>
@@ -192,43 +191,44 @@
       renderCalendar(currentMonth, currentYear);
     }
 
-    fetchData();
-
-    // Parallax mouse grid effect
-    const canvas = document.getElementById("bgCanvas");
-    const ctx = canvas.getContext("2d");
+    // === Çizgisel mouse parallax arka plan ===
+    const canvas = document.getElementById('bgCanvas');
+    const ctx = canvas.getContext('2d');
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
-    let mouseX = 0;
-    let mouseY = 0;
+    let mouse = { x: canvas.width / 2, y: canvas.height / 2 };
 
-    function drawGrid(offsetX, offsetY) {
+    document.addEventListener('mousemove', e => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+    });
+
+    function drawLines() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const spacing = 40;
-      ctx.strokeStyle = 'rgba(255,255,255,0.05)';
-      for (let x = -spacing; x < canvas.width + spacing; x += spacing) {
-        for (let y = -spacing; y < canvas.height + spacing; y += spacing) {
-          ctx.beginPath();
-          ctx.arc(x + offsetX % spacing, y + offsetY % spacing, 1, 0, 2 * Math.PI);
-          ctx.stroke();
-        }
+      const spacing = 60;
+      const parallax = 20;
+
+      ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+      ctx.lineWidth = 1;
+
+      for (let x = 0; x < canvas.width; x += spacing) {
+        ctx.beginPath();
+        ctx.moveTo(x + (mouse.x - canvas.width / 2) / parallax, 0);
+        ctx.lineTo(x + (mouse.x - canvas.width / 2) / parallax, canvas.height);
+        ctx.stroke();
       }
+      for (let y = 0; y < canvas.height; y += spacing) {
+        ctx.beginPath();
+        ctx.moveTo(0, y + (mouse.y - canvas.height / 2) / parallax);
+        ctx.lineTo(canvas.width, y + (mouse.y - canvas.height / 2) / parallax);
+        ctx.stroke();
+      }
+      requestAnimationFrame(drawLines);
     }
+    drawLines();
 
-    document.addEventListener("mousemove", (e) => {
-      mouseX = e.clientX / 20;
-      mouseY = e.clientY / 20;
-      drawGrid(mouseX, mouseY);
-    });
-
-    window.addEventListener("resize", () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      drawGrid(mouseX, mouseY);
-    });
-
-    drawGrid(0, 0);
+    fetchData();
   </script>
 </body>
 </html>
