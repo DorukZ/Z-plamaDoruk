@@ -1,77 +1,90 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Zıplama Antrenman Takvimi</title>
   <style>
-    body { font-family: Arial; padding: 20px; background: #f0f0f0; }
+    body { font-family: Arial; background: #f2f2f2; padding: 20px; }
     h1 { text-align: center; }
-    .calendar { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
-    .day {
-      border-radius: 10px;
-      padding: 10px;
-      background-color: #fffacd;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      cursor: pointer;
-      transition: 0.3s;
+    .calendar { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+    .day-box {
+      border-radius: 8px;
+      padding: 12px;
+      width: 180px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.2);
+      background-color: #fff;
     }
-    .completed { background-color: #b2f2bb; }
-    .incomplete { background-color: #ffa8a8; }
-    .today { border: 2px solid #339af0; }
+    .done { background-color: #c7f9cc !important; }
+    .not-done { background-color: #ffccd5 !important; }
+    .partial { background-color: #fff5ba !important; }
+    .today { border: 2px solid #007bff; }
+    .checkbox-list { margin-top: 8px; }
   </style>
 </head>
 <body>
   <h1>Zıplama Antrenman Takvimi</h1>
-  <div class="calendar" id="calendar"></div>
+  <div class="calendar" id="takvim"></div>
 
   <script>
-    const dataUrl = "program.json";
-    const localStorageKey = "ziplamaTamamlananGunler";
+    async function loadData() {
+      const res = await fetch('program.json');
+      const data = await res.json();
+      const takvimEl = document.getElementById('takvim');
+      const bugun = new Date().toISOString().split("T")[0];
 
-    async function loadProgram() {
-      const res = await fetch(dataUrl);
-      return await res.json();
+      for (const [tarih, antremanlar] of Object.entries(data)) {
+        const box = document.createElement("div");
+        box.className = "day-box";
+
+        const title = document.createElement("h4");
+        title.textContent = tarih;
+        box.appendChild(title);
+
+        const checklist = document.createElement("div");
+        checklist.className = "checkbox-list";
+
+        let tamamlanan = 0;
+        antremanlar.forEach((a, i) => {
+          const id = tarih + "_" + i;
+          const isChecked = localStorage.getItem(id) === "true";
+
+          const label = document.createElement("label");
+          const input = document.createElement("input");
+          input.type = "checkbox";
+          input.checked = isChecked;
+
+          input.addEventListener("change", () => {
+            localStorage.setItem(id, input.checked);
+            location.reload();
+          });
+
+          label.appendChild(input);
+          label.append(" " + a);
+          checklist.appendChild(label);
+          checklist.appendChild(document.createElement("br"));
+
+          if (isChecked) tamamlanan++;
+        });
+
+        box.appendChild(checklist);
+
+        // Günlük durum rengi
+        if (tamamlanan === antremanlar.length) {
+          box.classList.add("done");
+        } else if (tamamlanan > 0) {
+          box.classList.add("partial");
+        } else {
+          box.classList.add("not-done");
+        }
+
+        // Bugünün kutusu
+        if (tarih === bugun) box.classList.add("today");
+
+        takvimEl.appendChild(box);
+      }
     }
 
-    function loadCompletionStatus() {
-      const data = localStorage.getItem(localStorageKey);
-      return data ? JSON.parse(data) : {};
-    }
-
-    function saveCompletionStatus(status) {
-      localStorage.setItem(localStorageKey, JSON.stringify(status));
-    }
-
-    function createCalendar(program) {
-      const calendarEl = document.getElementById("calendar");
-      const status = loadCompletionStatus();
-      const today = new Date().toISOString().split("T")[0];
-
-      Object.keys(program).forEach(date => {
-        const el = document.createElement("div");
-        el.className = "day";
-
-        if (date === today) el.classList.add("today");
-        if (status[date] === true) el.classList.add("completed");
-        else if (status[date] === false) el.classList.add("incomplete");
-
-        const d = new Date(date);
-        const label = d.toLocaleDateString("tr-TR", { weekday: "long", month: "long", day: "numeric" });
-
-        el.innerHTML = `<strong>${label}</strong><br>${program[date].join("<br>")}`;
-        el.onclick = () => {
-          const yeniDurum = !(status[date] === true);
-          status[date] = yeniDurum;
-          saveCompletionStatus(status);
-          el.classList.toggle("completed", yeniDurum);
-          el.classList.toggle("incomplete", !yeniDurum);
-        };
-
-        calendarEl.appendChild(el);
-      });
-    }
-
-    loadProgram().then(createCalendar);
+    loadData();
   </script>
 </body>
 </html>
