@@ -2,73 +2,76 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Antrenman Takvimi</title>
+  <title>Zıplama Antrenman Takvimi</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #eee;
-      text-align: center;
-    }
-    h1 {
-      margin-top: 30px;
-    }
-    .takvim {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 10px;
-      max-width: 600px;
-      margin: 40px auto;
-    }
-    .gun {
-      padding: 20px;
+    body { font-family: Arial; padding: 20px; background: #f0f0f0; }
+    h1 { text-align: center; }
+    .calendar { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
+    .day {
       border-radius: 10px;
-      background-color: #ccc;
+      padding: 10px;
+      background-color: #fffacd;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
       cursor: pointer;
+      transition: 0.3s;
     }
-    .tamamlandi {
-      background-color: #8bc34a;
-      color: white;
-    }
-    .yapilmadi {
-      background-color: #f44336;
-      color: white;
-    }
-    .beklemede {
-      background-color: #ffc107;
-      color: black;
-    }
-    .detay {
-      margin-top: 30px;
-    }
+    .completed { background-color: #b2f2bb; }
+    .incomplete { background-color: #ffa8a8; }
+    .today { border: 2px solid #339af0; }
   </style>
 </head>
 <body>
-  <h1>Antrenman Takvimi</h1>
-  <div class="takvim" id="takvim"></div>
-  <div class="detay" id="detay"></div>
+  <h1>Zıplama Antrenman Takvimi</h1>
+  <div class="calendar" id="calendar"></div>
 
   <script>
-    const bugun = new Date().toISOString().split("T")[0];
-    const veri = [
-      { tarih: "2025-07-17", durum: "tamamlandi" },
-      { tarih: "2025-07-18", durum: "beklemede" },
-      { tarih: "2025-07-19", durum: "yapilmadi" },
-      { tarih: "2025-07-20", durum: "tamamlandi" },
-    ];
+    const dataUrl = "program.json";
+    const localStorageKey = "ziplamaTamamlananGunler";
 
-    const takvimEl = document.getElementById("takvim");
-    const detayEl = document.getElementById("detay");
+    async function loadProgram() {
+      const res = await fetch(dataUrl);
+      return await res.json();
+    }
 
-    veri.forEach(item => {
-      const gunEl = document.createElement("div");
-      gunEl.className = `gun ${item.durum}`;
-      gunEl.textContent = item.tarih;
-      gunEl.onclick = () => {
-        detayEl.innerHTML = `<strong>${item.tarih}</strong> tarihinde antrenman durumu: <em>${item.durum}</em>`;
-      };
-      takvimEl.appendChild(gunEl);
-    });
+    function loadCompletionStatus() {
+      const data = localStorage.getItem(localStorageKey);
+      return data ? JSON.parse(data) : {};
+    }
+
+    function saveCompletionStatus(status) {
+      localStorage.setItem(localStorageKey, JSON.stringify(status));
+    }
+
+    function createCalendar(program) {
+      const calendarEl = document.getElementById("calendar");
+      const status = loadCompletionStatus();
+      const today = new Date().toISOString().split("T")[0];
+
+      Object.keys(program).forEach(date => {
+        const el = document.createElement("div");
+        el.className = "day";
+
+        if (date === today) el.classList.add("today");
+        if (status[date] === true) el.classList.add("completed");
+        else if (status[date] === false) el.classList.add("incomplete");
+
+        const d = new Date(date);
+        const label = d.toLocaleDateString("tr-TR", { weekday: "long", month: "long", day: "numeric" });
+
+        el.innerHTML = `<strong>${label}</strong><br>${program[date].join("<br>")}`;
+        el.onclick = () => {
+          const yeniDurum = !(status[date] === true);
+          status[date] = yeniDurum;
+          saveCompletionStatus(status);
+          el.classList.toggle("completed", yeniDurum);
+          el.classList.toggle("incomplete", !yeniDurum);
+        };
+
+        calendarEl.appendChild(el);
+      });
+    }
+
+    loadProgram().then(createCalendar);
   </script>
 </body>
 </html>
