@@ -4,87 +4,124 @@
   <meta charset="UTF-8">
   <title>Zıplama Antrenman Takvimi</title>
   <style>
-    body { font-family: Arial; background: #f2f2f2; padding: 20px; }
-    h1 { text-align: center; }
-    .calendar { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
-    .day-box {
-      border-radius: 8px;
-      padding: 12px;
-      width: 180px;
-      box-shadow: 0 0 5px rgba(0,0,0,0.2);
-      background-color: #fff;
+    body {
+      font-family: sans-serif;
+      background: #f7f7f7;
+      margin: 0;
+      padding: 20px;
     }
-    .done { background-color: #c7f9cc !important; }
-    .not-done { background-color: #ffccd5 !important; }
-    .partial { background-color: #fff5ba !important; }
-    .today { border: 2px solid #007bff; }
-    .checkbox-list { margin-top: 8px; }
+    h1 {
+      text-align: center;
+    }
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .day {
+      background: #fff;
+      border: 2px solid #ccc;
+      border-radius: 10px;
+      padding: 10px;
+      cursor: pointer;
+      min-height: 100px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      transition: transform 0.2s;
+    }
+    .day:hover {
+      transform: scale(1.02);
+    }
+    .completed {
+      background-color: #c8f7c5;
+    }
+    .incomplete {
+      background-color: #f7c5c5;
+    }
+    .in-progress {
+      background-color: #fff3c5;
+    }
+    .details {
+      margin-top: 30px;
+      padding: 15px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      display: none;
+    }
+    .exercise {
+      margin-bottom: 5px;
+    }
+    .exercise input {
+      margin-right: 8px;
+    }
   </style>
 </head>
 <body>
   <h1>Zıplama Antrenman Takvimi</h1>
-  <div class="calendar" id="takvim"></div>
+  <div class="calendar" id="calendar"></div>
+  <div class="details" id="details"></div>
 
   <script>
-    async function loadData() {
-      const res = await fetch('program.json');
-      const data = await res.json();
-      const takvimEl = document.getElementById('takvim');
-      const bugun = new Date().toISOString().split("T")[0];
+    const program = {
+      "2025-07-15": ["Barfiks", "Dumbbell Row", "Plank"],
+      "2025-07-16": ["Bulgarian Split Squat", "Jump Squat", "Calf Raise", "Dumbbell Bench Press", "Push-Up"],
+      "2025-07-17": ["Dumbbell Bench Press", "Lateral Raise", "Push-Up"],
+      "2025-07-18": ["Barbell Deadlift", "Hip Thrust", "Jumping Lunges"],
+      "2025-07-19": ["Overhead Press", "Front Raise", "Side Plank"],
+      "2025-07-20": ["Box Jump", "Single Leg Jump", "Wall Sit"],
+      "2025-07-21": ["İstirahat / Aktif Dinlenme"]
+    };
 
-      for (const [tarih, antremanlar] of Object.entries(data)) {
-        const box = document.createElement("div");
-        box.className = "day-box";
+    const state = {}; // tamamlandı durumu
+    const calendar = document.getElementById("calendar");
+    const details = document.getElementById("details");
 
-        const title = document.createElement("h4");
-        title.textContent = tarih;
-        box.appendChild(title);
-
-        const checklist = document.createElement("div");
-        checklist.className = "checkbox-list";
-
-        let tamamlanan = 0;
-        antremanlar.forEach((a, i) => {
-          const id = tarih + "_" + i;
-          const isChecked = localStorage.getItem(id) === "true";
-
-          const label = document.createElement("label");
-          const input = document.createElement("input");
-          input.type = "checkbox";
-          input.checked = isChecked;
-
-          input.addEventListener("change", () => {
-            localStorage.setItem(id, input.checked);
-            location.reload();
-          });
-
-          label.appendChild(input);
-          label.append(" " + a);
-          checklist.appendChild(label);
-          checklist.appendChild(document.createElement("br"));
-
-          if (isChecked) tamamlanan++;
-        });
-
-        box.appendChild(checklist);
-
-        // Günlük durum rengi
-        if (tamamlanan === antremanlar.length) {
-          box.classList.add("done");
-        } else if (tamamlanan > 0) {
-          box.classList.add("partial");
-        } else {
-          box.classList.add("not-done");
-        }
-
-        // Bugünün kutusu
-        if (tarih === bugun) box.classList.add("today");
-
-        takvimEl.appendChild(box);
+    function createCalendar() {
+      for (let i = 15; i <= 21; i++) {
+        const date = `2025-07-${i.toString().padStart(2, '0')}`;
+        const div = document.createElement("div");
+        div.className = "day";
+        div.textContent = `${i} Temmuz`;
+        div.onclick = () => showDetails(date);
+        updateDayStyle(div, date);
+        calendar.appendChild(div);
       }
     }
 
-    loadData();
+    function updateDayStyle(div, date) {
+      if (!state[date]) return;
+      const total = program[date]?.length || 0;
+      const done = state[date].filter(x => x).length;
+      div.classList.remove("completed", "incomplete", "in-progress");
+      if (done === 0) div.classList.add("incomplete");
+      else if (done === total) div.classList.add("completed");
+      else div.classList.add("in-progress");
+    }
+
+    function showDetails(date) {
+      const exercises = program[date];
+      if (!exercises) return;
+
+      details.innerHTML = `<h3>${date} Antrenmanı</h3>`;
+      exercises.forEach((ex, i) => {
+        const checked = state[date]?.[i] ? 'checked' : '';
+        const el = document.createElement("div");
+        el.className = "exercise";
+        el.innerHTML = `<label><input type='checkbox' ${checked} onchange='toggleComplete("${date}", ${i}, this)'> ${ex}</label>`;
+        details.appendChild(el);
+      });
+      details.style.display = "block";
+    }
+
+    function toggleComplete(date, index, el) {
+      if (!state[date]) state[date] = Array(program[date].length).fill(false);
+      state[date][index] = el.checked;
+      const dayDiv = [...calendar.children].find(div => div.textContent.includes(parseInt(date.slice(-2))));
+      updateDayStyle(dayDiv, date);
+    }
+
+    createCalendar();
   </script>
 </body>
 </html>
