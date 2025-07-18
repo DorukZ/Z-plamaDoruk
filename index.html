@@ -44,7 +44,7 @@
     }
     .toggle-mode {
       position: fixed; top: 10px; right: 10px; background: var(--card); border: 1px solid var(--border);
-      color: var(--text); padding: 5px 10px; border-radius: 4px; cursor: pointer;
+      color: var(--text); padding: 5px 10px; border-radius: 4px; cursor: pointer; z-index: 2;
     }
     #bgCanvas {
       position: fixed;
@@ -52,7 +52,7 @@
       left: 0;
       width: 100vw;
       height: 100vh;
-      z-index: -1;
+      z-index: 0;
       pointer-events: none;
     }
   </style>
@@ -191,44 +191,56 @@
       renderCalendar(currentMonth, currentYear);
     }
 
-    // === Çizgisel mouse parallax arka plan ===
+    fetchData();
+
+    // Fancy background line effect
     const canvas = document.getElementById('bgCanvas');
     const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
 
-    let mouse = { x: canvas.width / 2, y: canvas.height / 2 };
-
-    document.addEventListener('mousemove', e => {
-      mouse.x = e.clientX;
-      mouse.y = e.clientY;
+    window.addEventListener('resize', () => {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width;
+      canvas.height = height;
     });
 
+    let lines = [];
+    for (let i = 0; i < 30; i++) {
+      lines.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        length: 100 + Math.random() * 100,
+        speed: 0.2 + Math.random() * 0.5,
+        angle: Math.random() * 360
+      });
+    }
+
     function drawLines() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const spacing = 60;
-      const parallax = 20;
-
-      ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+      ctx.clearRect(0, 0, width, height);
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
       ctx.lineWidth = 1;
+      for (let l of lines) {
+        ctx.beginPath();
+        ctx.moveTo(l.x, l.y);
+        ctx.lineTo(l.x + Math.cos(l.angle) * l.length, l.y + Math.sin(l.angle) * l.length);
+        ctx.stroke();
 
-      for (let x = 0; x < canvas.width; x += spacing) {
-        ctx.beginPath();
-        ctx.moveTo(x + (mouse.x - canvas.width / 2) / parallax, 0);
-        ctx.lineTo(x + (mouse.x - canvas.width / 2) / parallax, canvas.height);
-        ctx.stroke();
-      }
-      for (let y = 0; y < canvas.height; y += spacing) {
-        ctx.beginPath();
-        ctx.moveTo(0, y + (mouse.y - canvas.height / 2) / parallax);
-        ctx.lineTo(canvas.width, y + (mouse.y - canvas.height / 2) / parallax);
-        ctx.stroke();
+        l.x += Math.cos(l.angle) * l.speed;
+        l.y += Math.sin(l.angle) * l.speed;
+
+        if (l.x > width || l.y > height || l.x < 0 || l.y < 0) {
+          l.x = Math.random() * width;
+          l.y = Math.random() * height;
+        }
       }
       requestAnimationFrame(drawLines);
     }
-    drawLines();
 
-    fetchData();
+    drawLines();
   </script>
 </body>
 </html>
