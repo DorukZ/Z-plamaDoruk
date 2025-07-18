@@ -1,55 +1,114 @@
-{
-  "pazartesi": {
-    "antrenmanlar": [
-      "Basketbol Antrenmanı",
-      "Plank 3×1dk",
-      "Dead Bug 3×12",
-      "Calf Raises 4×15"
-    ]
+[
+  {
+    "tarih": "2025-07-15",
+    "tamamlandi": false
   },
-  "sali": {
-    "antrenmanlar": [
-      "Jump Squat 3×10",
-      "Bulgarian Split Squat 3×8",
-      "Dumbbell RDL 3×10",
-      "Seated Calf Raises 3×20",
-      "Russian Twist 3×20"
-    ]
+  {
+    "tarih": "2025-07-16",
+    "tamamlandi": false
   },
-  "carsamba": {
-    "antrenmanlar": [
-      "Basketbol Antrenmanı",
-      "Side Plank (30sn×2)",
-      "Bird-Dog 3×12"
-    ]
+  {
+    "tarih": "2025-07-17",
+    "tamamlandi": false
   },
-  "persembe": {
-    "antrenmanlar": [
-      "Basketbol Antrenmanı",
-      "İsteğe Bağlı: Hafif Calf (Bodyweight)"
-    ]
+  {
+    "tarih": "2025-07-18",
+    "tamamlandi": false
   },
-  "cuma": {
-    "antrenmanlar": [
-      "Goblet Squat 3×12",
-      "Push-up 3×Max",
-      "Bent-over Row 3×10",
-      "Shoulder Press 3×10",
-      "Standing Calf Raises 3×20"
-    ]
+  {
+    "tarih": "2025-07-19",
+    "tamamlandi": false
   },
-  "cumartesi": {
-    "antrenmanlar": [
-      "Basketbol Antrenmanı",
-      "Leg Raise 3×15",
-      "Plank 2×1dk"
-    ]
+  {
+    "tarih": "2025-07-20",
+    "tamamlandi": false
   },
-  "pazar": {
-    "antrenmanlar": [
-      "Basketbol Antrenmanı",
-      "Jump Lunge 3×10",
-      "Calf Raises 4×20"
-    ]
+  {
+    "tarih": "2025-07-21",
+    "tamamlandi": false
+  },
+  {
+    "tarih": "2025-07-22",
+    "tamamlandi": false
+  },
+  {
+    "tarih": "2025-07-23",
+    "tamamlandi": false
+  },
+  {
+    "tarih": "2025-07-24",
+    "tamamlandi": false
+  },
+  {
+    "tarih": "2025-07-25",
+    "tamamlandi": false
+  },
+  {
+    "tarih": "2025-07-26",
+    "tamamlandi": false
+  },
+  {
+    "tarih": "2025-07-27",
+    "tamamlandi": false
+  },
+  {
+    "tarih": "2025-07-28",
+    "tamamlandi": false
+  },
+  {
+    "tarih": "2025-07-29",
+    "tamamlandi": false
+  },
+  {
+    "tarih": "2025-07-30",
+    "tamamlandi": false
+  },
+  {
+    "tarih": "2025-07-31",
+    "tamamlandi": false
+  },
+  {
+    "tarih": "2025-08-01",
+    "tamamlandi": false
+  },
+  {
+    "tarih": "2025-08-02",
+    "tamamlandi": false
+  },
+  {
+    "tarih": "2025-08-03",
+    "tamamlandi": false
+  },
+  {
+    "tarih": "2025-08-04",
+    "tamamlandi": false
+  },
+  {
+    "tarih": "2025-08-05",
+    "tamamlandi": false
+  },
+  {
+    "tarih": "2025-08-06",
+    "tamamlandi": false
+  },
+  {
+    "tarih": "2025-08-07",
+    "tamamlandi": false
+  },
+  {
+    "tarih": "2025-08-08",
+    "tamamlandi": false
+  },
+  {
+    "tarih": "2025-08-09",
+    "tamamlandi": false
+  },
+  {
+    "tarih": "2025-08-10",
+    "tamamlandi": false
+  },
+  {
+    "tarih": "2025-08-11",
+    "tamamlandi": false
   }
-}
+]
