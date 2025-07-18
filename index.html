@@ -1,148 +1,79 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
-  <title>Zıplama Takibi</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Zıplama Antrenman Takvimi</title>
   <style>
-    body { font-family: Arial; background: #f5f5f5; padding: 30px; }
-    h1, h2 { color: #333; cursor: pointer; }
-    ul { list-style: none; padding: 0; }
-    li { background: white; margin: 8px 0; padding: 12px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); display: flex; align-items: center; }
-    input[type="checkbox"] { transform: scale(1.2); margin-right: 12px; }
-    li.checked { background: #d4edda; text-decoration: line-through; color: #3c763d; }
-    #tamamlandiMesaj { margin-top: 20px; font-weight: bold; color: green; }
-
-    #takvimPanel { display: none; margin-top: 20px; display: flex; flex-wrap: wrap; gap: 10px; }
-    .gunKutu { width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; border-radius: 10px; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
-    .done { background-color: #d4edda; }
-    .todo { background-color: #f8d7da; }
-    .today { background-color: #fff3cd; }
-
-    #gunDetay { margin-top: 20px; padding: 10px; background: white; border-left: 5px solid #007bff; display: none; }
+    body { font-family: Arial; background: #f8f9fa; margin: 2rem; }
+    h1 { text-align: center; }
+    .calendar { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+    .day-box {
+      width: 120px; padding: 10px; border-radius: 10px;
+      text-align: center; border: 1px solid #ccc;
+      transition: 0.3s; cursor: pointer;
+    }
+    .green { background: #c8f7c5; }
+    .red { background: #f7c5c5; }
+    .yellow { background: #fff5c2; }
   </style>
 </head>
 <body>
-  <h1>Bugünkü Antrenman</h1>
-  <ul id="liste"></ul>
-  <div id="tamamlandiMesaj"></div>
+  <h1>Antrenman Takvimi</h1>
+  <div id="takvim" class="calendar"></div>
 
-  <h2 onclick="toggleTakvim()">📆 İlerleme Takvimi (Tıklayınca Açılır)</h2>
-  <div id="takvimPanel"></div>
-  <div id="gunDetay"></div>
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
-  <script>
-    const gunler = ["pazar", "pazartesi", "sali", "carsamba", "persembe", "cuma", "cumartesi"];
-    const bugun = new Date();
-    const bugunGun = gunler[bugun.getDay()];
-    const tarih = bugun.toLocaleDateString("tr-TR");
+    const supabase = createClient(
+      'https://drnvqepwzzhsghidavap.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRybnZxZXB3enpoc2doaWRhdmFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI3OTYwMTgsImV4cCI6MjA2ODM3MjAxOH0.i5TNqyZNajuoPFejMaG1BVA-SFOfVfV5aUgCgEEm6nw'
+    );
 
-    function anahtar(gun, index, t) {
-      return `tamam_${gun}_${index}_${t}`;
-    }
+    const cihaz_id = localStorage.getItem("cihaz_id") || crypto.randomUUID();
+    localStorage.setItem("cihaz_id", cihaz_id);
 
-    async function getirProgram(gunAdi) {
-      const res = await fetch("program.json");
-      const program = await res.json();
-      return program[gunAdi]?.antrenmanlar || [];
-    }
+    const takvimEl = document.getElementById("takvim");
+    const bugun = new Date().toISOString().slice(0, 10);
 
-    async function gosterBugun() {
-      const liste = document.getElementById("liste");
-      liste.innerHTML = "";
-      const antrenmanlar = await getirProgram(bugunGun);
-      const mesaj = document.getElementById("tamamlandiMesaj");
-      mesaj.innerText = "";
+    const renkBelirle = (tarih, tamamlandi) => {
+      if (tarih < bugun && !tamamlandi) return "red";
+      if (tarih === bugun && !tamamlandi) return "yellow";
+      if (tamamlandi) return "green";
+      return "";
+    };
 
-      antrenmanlar.forEach((item, index) => {
-        const li = document.createElement("li");
-        const checkbox = document.createElement("input");
-        checkbox.type = "checkbox";
-        checkbox.id = "check_" + index;
-        const kayitli = localStorage.getItem(anahtar(bugunGun, index, tarih));
-        checkbox.checked = kayitli === "true";
+    async function veriGetir() {
+      const { data, error } = await supabase
+        .from("antrenmanlar")
+        .select("*")
+        .eq("cihaz_id", cihaz_id)
+        .order("tarih", { ascending: true });
 
-        const label = document.createElement("label");
-        label.htmlFor = "check_" + index;
-        label.innerText = item;
-
-        if (checkbox.checked) li.classList.add("checked");
-
-        checkbox.addEventListener("change", async () => {
-          localStorage.setItem(anahtar(bugunGun, index, tarih), checkbox.checked);
-          checkbox.checked ? li.classList.add("checked") : li.classList.remove("checked");
-
-          const toplam = antrenmanlar.length;
-          const isaretli = document.querySelectorAll("input[type='checkbox']:checked").length;
-
-          if (isaretli === toplam) {
-            localStorage.setItem(tarih, "tamamlandi");
-            mesaj.innerText = "✅ Tebrikler, bugünün antrenmanı tamamlandı!";
-          } else {
-            localStorage.removeItem(tarih);
-            mesaj.innerText = "";
-          }
-          takvimiYenile();
-        });
-
-        li.appendChild(checkbox);
-        li.appendChild(label);
-        liste.appendChild(li);
-      });
-
-      if (antrenmanlar.length > 0 && antrenmanlar.every((_, i) => localStorage.getItem(anahtar(bugunGun, i, tarih)) === "true")) {
-        localStorage.setItem(tarih, "tamamlandi");
-        mesaj.innerText = "✅ Tebrikler, bugünün antrenmanı tamamlandı!";
+      if (error) {
+        takvimEl.innerHTML = "<p>Veri alınamadı.</p>";
+        return;
       }
 
-      takvimiYenile();
-    }
-
-    function toggleTakvim() {
-      const panel = document.getElementById("takvimPanel");
-      panel.style.display = panel.style.display === "none" ? "flex" : "none";
-    }
-
-    async function takvimiYenile() {
-      const panel = document.getElementById("takvimPanel");
-      panel.innerHTML = "";
-
-      for (let i = 6; i >= 0; i--) {
-        const gun = new Date();
-        gun.setDate(bugun.getDate() - i);
-        const gunStr = gun.toLocaleDateString("tr-TR");
-        const durum = localStorage.getItem(gunStr);
-
+      data.forEach(gun => {
         const div = document.createElement("div");
-        div.className = "gunKutu";
-        div.innerText = gunStr.split(".").slice(0, 2).join(".");
-        if (gunStr === tarih) div.classList.add("today");
-        else if (durum === "tamamlandi") div.classList.add("done");
-        else div.classList.add("todo");
-
-        div.addEventListener("click", () => gosterDetay(gunStr));
-        panel.appendChild(div);
-      }
-    }
-
-    async function gosterDetay(tarihStr) {
-      const detay = document.getElementById("gunDetay");
-      detay.style.display = "block";
-      const gun = new Date(tarihStr.split(".").reverse().join("-"));
-      const gunAdi = gunler[gun.getDay()];
-      const program = await fetch("program.json").then(r => r.json());
-      const liste = program[gunAdi]?.antrenmanlar || [];
-
-      let html = `<h3>${tarihStr} (${gunAdi.toUpperCase()})</h3><ul>`;
-      liste.forEach((item, index) => {
-        const anahtarStr = `tamam_${gunAdi}_${index}_${tarihStr}`;
-        const tikliMi = localStorage.getItem(anahtarStr) === "true";
-        html += `<li>${tikliMi ? "✅" : "❌"} ${item}</li>`;
+        div.className = `day-box ${renkBelirle(gun.tarih, gun.tamamlandi)}`;
+        div.textContent = gun.tarih;
+        div.onclick = () => tamamla(gun.tarih, !gun.tamamlandi);
+        takvimEl.appendChild(div);
       });
-      html += "</ul>";
-      detay.innerHTML = html;
     }
 
-    window.onload = gosterBugun;
+    async function tamamla(tarih, durum) {
+      await supabase
+        .from("antrenmanlar")
+        .update({ tamamlandi: durum })
+        .eq("tarih", tarih)
+        .eq("cihaz_id", cihaz_id);
+      location.reload();
+    }
+
+    veriGetir();
   </script>
 </body>
 </html>
