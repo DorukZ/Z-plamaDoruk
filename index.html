@@ -44,7 +44,7 @@
     }
     .toggle-mode {
       position: fixed; top: 10px; right: 10px; background: var(--card); border: 1px solid var(--border);
-      color: var(--text); padding: 5px 10px; border-radius: 4px; cursor: pointer;
+      color: var(--text); padding: 5px 10px; border-radius: 4px; cursor: pointer; z-index: 2;
     }
     #bgCanvas {
       position: fixed;
@@ -75,194 +75,88 @@
   <script>
     const canvas = document.getElementById('bgCanvas');
     const ctx = canvas.getContext('2d');
-    let width, height, particles;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    let particles = [];
+    const num = 100;
+    const mouse = { x: null, y: null, radius: 100 };
 
-    function resizeCanvas() {
-      width = canvas.width = window.innerWidth;
-      height = canvas.height = window.innerHeight;
-    }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
-
-    const mouse = { x: null, y: null };
     window.addEventListener('mousemove', e => {
-      mouse.x = e.clientX;
-      mouse.y = e.clientY;
+      mouse.x = e.x;
+      mouse.y = e.y;
     });
 
-    function createParticles(num) {
-      particles = Array.from({ length: num }, () => ({
-        x: Math.random() * width,
-        y: Math.random() * height,
-        vx: (Math.random() - 0.5) * 0.5,
-        vy: (Math.random() - 0.5) * 0.5
-      }));
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+
+    function Particle() {
+      this.x = Math.random() * canvas.width;
+      this.y = Math.random() * canvas.height;
+      this.vx = (Math.random() - 0.5) * 1;
+      this.vy = (Math.random() - 0.5) * 1;
+      this.size = 2;
     }
 
-    function drawParticles() {
-      ctx.clearRect(0, 0, width, height);
+    Particle.prototype.draw = function () {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
       ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--text');
-      ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--text');
+      ctx.fill();
+    };
 
-      particles.forEach((p, i) => {
-        p.x += p.vx;
-        p.y += p.vy;
+    Particle.prototype.update = function () {
+      this.x += this.vx;
+      this.y += this.vy;
 
-        if (p.x < 0 || p.x > width) p.vx *= -1;
-        if (p.y < 0 || p.y > height) p.vy *= -1;
+      if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+      if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+    };
 
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
-        ctx.fill();
+    function initParticles() {
+      particles = [];
+      for (let i = 0; i < num; i++) particles.push(new Particle());
+    }
 
-        for (let j = i + 1; j < particles.length; j++) {
-          const q = particles[j];
-          const dx = p.x - q.x;
-          const dy = p.y - q.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < 100) {
-            const mouseDx = p.x - mouse.x;
-            const mouseDy = p.y - mouse.y;
-            const mouseDist = Math.sqrt(mouseDx * mouseDx + mouseDy * mouseDy);
-            const repel = mouseDist < 100 ? 1.5 : 1;
-            ctx.globalAlpha = 1 - dist / 100;
+    function connectParticles() {
+      for (let a = 0; a < particles.length; a++) {
+        for (let b = a + 1; b < particles.length; b++) {
+          let dx = particles[a].x - particles[b].x;
+          let dy = particles[a].y - particles[b].y;
+          let distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance < 120) {
+            let opacity = 1 - distance / 120;
+            if (mouse.x && mouse.y) {
+              let mx = particles[a].x - mouse.x;
+              let my = particles[a].y - mouse.y;
+              let mouseDist = Math.sqrt(mx * mx + my * my);
+              if (mouseDist < mouse.radius) continue;
+            }
+            ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--text');
+            ctx.lineWidth = 0.5;
             ctx.beginPath();
-            ctx.moveTo(p.x, p.y);
-            ctx.lineTo(q.x + repel, q.y + repel);
+            ctx.moveTo(particles[a].x, particles[a].y);
+            ctx.lineTo(particles[b].x, particles[b].y);
             ctx.stroke();
           }
         }
-      });
-      ctx.globalAlpha = 1;
+      }
     }
 
     function animate() {
-      drawParticles();
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => {
+        p.update();
+        p.draw();
+      });
+      connectParticles();
       requestAnimationFrame(animate);
     }
 
-    createParticles(70);
+    initParticles();
     animate();
-
-    const binId = '687a13b96213bd325afbbe5e';
-    const apiKey = '$2a$10$sNHjrdpRXLmd4/CDDtyxZOsljKtoyVaXwUTlb4/GSqVxF.XyAwfj2';
-    let jsonData = {};
-    let currentMonth = new Date().getMonth();
-    let currentYear = new Date().getFullYear();
-
-    function toggleDarkMode() {
-      document.body.classList.toggle('dark');
-    }
-
-    function formatDate(date) {
-      const offsetDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-      return offsetDate.toISOString().split('T')[0];
-    }
-
-    async function fetchData() {
-      const res = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
-        headers: { 'X-Master-Key': apiKey }
-      });
-      const data = await res.json();
-      jsonData = data.record;
-      renderCalendar(currentMonth, currentYear);
-      showWorkoutDetails(formatDate(new Date()));
-    }
-
-    async function saveData() {
-      await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Master-Key': apiKey
-        },
-        body: JSON.stringify(jsonData)
-      });
-    }
-
-    function renderCalendar(month, year) {
-      const calendar = document.getElementById('calendar');
-      const monthYearText = document.getElementById('month-year');
-      calendar.innerHTML = '';
-      const date = new Date(year, month, 1);
-      const todayStr = formatDate(new Date());
-
-      const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül"];
-      monthYearText.textContent = `${monthNames[month]} ${year}`;
-
-      while (date.getMonth() === month) {
-        const dateStr = formatDate(date);
-        const dayEl = document.createElement('div');
-        dayEl.className = 'day';
-        dayEl.textContent = date.getDate();
-
-        if (dateStr === todayStr) dayEl.classList.add('today');
-        if (dateStr < todayStr) dayEl.classList.add('past-day');
-
-        const entry = jsonData[dateStr];
-        if (entry) {
-          const doneCount = entry.exercises.filter(e => e.done).length;
-          if (doneCount === 0) dayEl.classList.add('incomplete');
-          else if (doneCount < entry.exercises.length) dayEl.classList.add('in-progress');
-          else dayEl.classList.add('completed');
-        }
-
-        dayEl.onclick = () => showWorkoutDetails(dateStr);
-        calendar.appendChild(dayEl);
-        date.setDate(date.getDate() + 1);
-      }
-    }
-
-    function showWorkoutDetails(dateStr) {
-      const container = document.getElementById('workout-details');
-      const todayStr = formatDate(new Date());
-      const entry = jsonData[dateStr];
-      container.innerHTML = `<h3>${dateStr} Antrenmanı</h3>`;
-
-      if (!entry) {
-        container.innerHTML += `<p>Bu tarihte antrenman yok.</p>`;
-        return;
-      }
-
-      entry.exercises.forEach((exercise, idx) => {
-        const checkbox = document.createElement("input");
-        checkbox.type = "checkbox";
-        checkbox.disabled = (dateStr !== todayStr);
-        checkbox.checked = exercise.done;
-        checkbox.onchange = async () => {
-          exercise.done = checkbox.checked;
-          await saveData();
-          renderCalendar(currentMonth, currentYear);
-        };
-
-        const label = document.createElement("label");
-        label.className = "checkbox";
-        label.appendChild(checkbox);
-        label.append(` ${exercise.name}`);
-
-        container.appendChild(label);
-        container.appendChild(document.createElement("br"));
-
-        if (exercise.description) {
-          const desc = document.createElement("div");
-          desc.style.fontSize = "0.9rem";
-          desc.style.marginBottom = "10px";
-          desc.style.color = "#666";
-          desc.textContent = exercise.description;
-          container.appendChild(desc);
-        }
-      });
-    }
-
-    function changeMonth(offset) {
-      const validMonths = [6, 7, 8];
-      let next = currentMonth + offset;
-      if (!validMonths.includes(next)) return;
-      currentMonth = next;
-      renderCalendar(currentMonth, currentYear);
-    }
-
-    fetchData();
   </script>
 </body>
 </html>
