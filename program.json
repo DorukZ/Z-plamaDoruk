@@ -1,55 +1,9 @@
 {
-  "pazartesi": {
-    "antrenmanlar": [
-      "Basketbol Antrenmanı",
-      "Plank 3×1dk",
-      "Dead Bug 3×12",
-      "Calf Raises 4×15"
-    ]
-  },
-  "sali": {
-    "antrenmanlar": [
-      "Jump Squat 3×10",
-      "Bulgarian Split Squat 3×8",
-      "Dumbbell RDL 3×10",
-      "Seated Calf Raises 3×20",
-      "Russian Twist 3×20"
-    ]
-  },
-  "carsamba": {
-    "antrenmanlar": [
-      "Basketbol Antrenmanı",
-      "Side Plank (30sn×2)",
-      "Bird-Dog 3×12"
-    ]
-  },
-  "persembe": {
-    "antrenmanlar": [
-      "Basketbol Antrenmanı",
-      "İsteğe Bağlı: Hafif Calf (Bodyweight)"
-    ]
-  },
-  "cuma": {
-    "antrenmanlar": [
-      "Goblet Squat 3×12",
-      "Push-up 3×Max",
-      "Bent-over Row 3×10",
-      "Shoulder Press 3×10",
-      "Standing Calf Raises 3×20"
-    ]
-  },
-  "cumartesi": {
-    "antrenmanlar": [
-      "Basketbol Antrenmanı",
-      "Leg Raise 3×15",
-      "Plank 2×1dk"
-    ]
-  },
-  "pazar": {
-    "antrenmanlar": [
-      "Basketbol Antrenmanı",
-      "Jump Lunge 3×10",
-      "Calf Raises 4×20"
-    ]
-  }
+  "2025-07-15": ["Barfiks", "Dumbbell Row", "Plank"],
+  "2025-07-16": ["Bulgarian Split Squat", "Jump Squat", "Calf Raise"],
+  "2025-07-17": ["Dumbbell Bench Press", "Lateral Raise", "Push-up"],
+  "2025-07-18": ["Barbell Deadlift", "Hip Thrust", "Jumping Lunges"],
+  "2025-07-19": ["Overhead Press", "Front Raise", "Side Plank"],
+  "2025-07-20": ["Box Jump", "Single Leg Jump", "Wall Sit"],
+  "2025-07-21": ["İstirahat / Aktif Dinlenme"]
 }
