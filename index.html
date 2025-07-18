@@ -52,7 +52,7 @@
       left: 0;
       width: 100vw;
       height: 100vh;
-      z-index: -1;
+      z-index: 0;
       pointer-events: none;
     }
   </style>
@@ -73,6 +73,77 @@
   <div class="workout-container" id="workout-details">Gün bilgisi yüklenecek...</div>
 
   <script>
+    const canvas = document.getElementById('bgCanvas');
+    const ctx = canvas.getContext('2d');
+    let width, height, particles;
+
+    function resizeCanvas() {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    const mouse = { x: null, y: null };
+    window.addEventListener('mousemove', e => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+    });
+
+    function createParticles(num) {
+      particles = Array.from({ length: num }, () => ({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        vx: (Math.random() - 0.5) * 0.5,
+        vy: (Math.random() - 0.5) * 0.5
+      }));
+    }
+
+    function drawParticles() {
+      ctx.clearRect(0, 0, width, height);
+      ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--text');
+      ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--text');
+
+      particles.forEach((p, i) => {
+        p.x += p.vx;
+        p.y += p.vy;
+
+        if (p.x < 0 || p.x > width) p.vx *= -1;
+        if (p.y < 0 || p.y > height) p.vy *= -1;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+        ctx.fill();
+
+        for (let j = i + 1; j < particles.length; j++) {
+          const q = particles[j];
+          const dx = p.x - q.x;
+          const dy = p.y - q.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 100) {
+            const mouseDx = p.x - mouse.x;
+            const mouseDy = p.y - mouse.y;
+            const mouseDist = Math.sqrt(mouseDx * mouseDx + mouseDy * mouseDy);
+            const repel = mouseDist < 100 ? 1.5 : 1;
+            ctx.globalAlpha = 1 - dist / 100;
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(q.x + repel, q.y + repel);
+            ctx.stroke();
+          }
+        }
+      });
+      ctx.globalAlpha = 1;
+    }
+
+    function animate() {
+      drawParticles();
+      requestAnimationFrame(animate);
+    }
+
+    createParticles(70);
+    animate();
+
     const binId = '687a13b96213bd325afbbe5e';
     const apiKey = '$2a$10$sNHjrdpRXLmd4/CDDtyxZOsljKtoyVaXwUTlb4/GSqVxF.XyAwfj2';
     let jsonData = {};
@@ -171,6 +242,15 @@
 
         container.appendChild(label);
         container.appendChild(document.createElement("br"));
+
+        if (exercise.description) {
+          const desc = document.createElement("div");
+          desc.style.fontSize = "0.9rem";
+          desc.style.marginBottom = "10px";
+          desc.style.color = "#666";
+          desc.textContent = exercise.description;
+          container.appendChild(desc);
+        }
       });
     }
 
@@ -181,72 +261,6 @@
       currentMonth = next;
       renderCalendar(currentMonth, currentYear);
     }
-
-    // Canvas çizim
-    const canvas = document.getElementById('bgCanvas');
-    const ctx = canvas.getContext('2d');
-    let particles = [];
-    let mouse = { x: 0, y: 0 };
-
-    function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    }
-
-    class Particle {
-      constructor() {
-        this.reset();
-      }
-      reset() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
-        this.vx = (Math.random() - 0.5) * 0.5;
-        this.vy = (Math.random() - 0.5) * 0.5;
-        this.size = 2;
-      }
-      update() {
-        this.x += this.vx;
-        this.y += this.vy;
-        if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) this.reset();
-      }
-      draw() {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--text');
-        ctx.fill();
-      }
-    }
-
-    function connectParticles() {
-      for (let i = 0; i < particles.length; i++) {
-        for (let j = i + 1; j < particles.length; j++) {
-          let dx = particles[i].x - particles[j].x;
-          let dy = particles[i].y - particles[j].y;
-          let dist = dx * dx + dy * dy;
-          if (dist < 5000) {
-            ctx.beginPath();
-            ctx.moveTo(particles[i].x, particles[i].y);
-            ctx.lineTo(particles[j].x, particles[j].y);
-            ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--text');
-            ctx.lineWidth = 0.3;
-            ctx.stroke();
-          }
-        }
-      }
-    }
-
-    function animate() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      particles.forEach(p => { p.update(); p.draw(); });
-      connectParticles();
-      requestAnimationFrame(animate);
-    }
-
-    window.addEventListener('resize', resizeCanvas);
-    window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
-    resizeCanvas();
-    particles = Array.from({ length: 80 }, () => new Particle());
-    animate();
 
     fetchData();
   </script>
