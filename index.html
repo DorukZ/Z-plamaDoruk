@@ -73,93 +73,125 @@
   <div class="workout-container" id="workout-details">Gün bilgisi yüklenecek...</div>
 
   <script>
+    const binId = '687a13b96213bd325afbbe5e';
+    const apiKey = '$2a$10$sNHjrdpRXLmd4/CDDtyxZOsljKtoyVaXwUTlb4/GSqVxF.XyAwfj2';
+    let jsonData = {};
+    let currentMonth = new Date().getMonth();
+    let currentYear = new Date().getFullYear();
+
     function toggleDarkMode() {
       document.body.classList.toggle('dark');
     }
 
-    // Partikül efekti
-    const canvas = document.getElementById('bgCanvas');
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    let particlesArray = [];
-    let mouse = { x: null, y: null, radius: 100 };
-
-    window.addEventListener('mousemove', function(e) {
-      mouse.x = e.x;
-      mouse.y = e.y;
-    });
-
-    class Particle {
-      constructor(x, y, dx, dy, size) {
-        this.x = x;
-        this.y = y;
-        this.dx = dx;
-        this.dy = dy;
-        this.size = size;
-      }
-      draw() {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
-        ctx.fillStyle = '#ffffff44';
-        ctx.fill();
-      }
-      update() {
-        if (this.x + this.size > canvas.width || this.x - this.size < 0) this.dx *= -1;
-        if (this.y + this.size > canvas.height || this.y - this.size < 0) this.dy *= -1;
-        this.x += this.dx;
-        this.y += this.dy;
-        this.draw();
-      }
+    function formatDate(date) {
+      const offsetDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+      return offsetDate.toISOString().split('T')[0];
     }
 
-    function initParticles() {
-      particlesArray = [];
-      const number = Math.floor((canvas.width * canvas.height) / 9000);
-      for (let i = 0; i < number; i++) {
-        const size = Math.random() * 2 + 1;
-        const x = Math.random() * (canvas.width - size * 2);
-        const y = Math.random() * (canvas.height - size * 2);
-        const dx = (Math.random() - 0.5) * 1;
-        const dy = (Math.random() - 0.5) * 1;
-        particlesArray.push(new Particle(x, y, dx, dy, size));
-      }
+    async function fetchData() {
+      const res = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
+        headers: { 'X-Master-Key': apiKey }
+      });
+      const data = await res.json();
+      jsonData = data.record;
+      renderCalendar(currentMonth, currentYear);
+      showWorkoutDetails(formatDate(new Date()));
     }
 
-    function connectLines() {
-      for (let a = 0; a < particlesArray.length; a++) {
-        for (let b = a; b < particlesArray.length; b++) {
-          let dx = particlesArray[a].x - particlesArray[b].x;
-          let dy = particlesArray[a].y - particlesArray[b].y;
-          let distance = dx * dx + dy * dy;
-          if (distance < 10000) {
-            ctx.beginPath();
-            ctx.strokeStyle = '#ffffff22';
-            ctx.lineWidth = 1;
-            ctx.moveTo(particlesArray[a].x, particlesArray[a].y);
-            ctx.lineTo(particlesArray[b].x, particlesArray[b].y);
-            ctx.stroke();
-          }
+    async function saveData() {
+      await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Master-Key': apiKey
+        },
+        body: JSON.stringify(jsonData)
+      });
+    }
+
+    function renderCalendar(month, year) {
+      const calendar = document.getElementById('calendar');
+      const monthYearText = document.getElementById('month-year');
+      calendar.innerHTML = '';
+      const date = new Date(year, month, 1);
+      const todayStr = formatDate(new Date());
+
+      const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül"];
+      monthYearText.textContent = `${monthNames[month]} ${year}`;
+
+      while (date.getMonth() === month) {
+        const dateStr = formatDate(date);
+        const dayEl = document.createElement('div');
+        dayEl.className = 'day';
+        dayEl.textContent = date.getDate();
+
+        if (dateStr === todayStr) dayEl.classList.add('today');
+        if (dateStr < todayStr) dayEl.classList.add('past-day');
+
+        const entry = jsonData[dateStr];
+        if (entry) {
+          const doneCount = entry.exercises.filter(e => e.done).length;
+          if (doneCount === 0) dayEl.classList.add('incomplete');
+          else if (doneCount < entry.exercises.length) dayEl.classList.add('in-progress');
+          else dayEl.classList.add('completed');
         }
+
+        dayEl.onclick = () => showWorkoutDetails(dateStr);
+        calendar.appendChild(dayEl);
+        date.setDate(date.getDate() + 1);
       }
     }
 
-    function animate() {
-      requestAnimationFrame(animate);
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      particlesArray.forEach(p => p.update());
-      connectLines();
+    function showWorkoutDetails(dateStr) {
+      const container = document.getElementById('workout-details');
+      const todayStr = formatDate(new Date());
+      const entry = jsonData[dateStr];
+      container.innerHTML = `<h3>${dateStr} Antrenmanı</h3>`;
+
+      if (!entry) {
+        container.innerHTML += `<p>Bu tarihte antrenman yok.</p>`;
+        return;
+      }
+
+      entry.exercises.forEach((exercise, idx) => {
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.disabled = (dateStr !== todayStr);
+        checkbox.checked = exercise.done;
+        checkbox.onchange = async () => {
+          exercise.done = checkbox.checked;
+          await saveData();
+          renderCalendar(currentMonth, currentYear);
+        };
+
+        const label = document.createElement("label");
+        label.className = "checkbox";
+        label.appendChild(checkbox);
+        label.append(` ${exercise.name}`);
+
+        container.appendChild(label);
+        container.appendChild(document.createElement("br"));
+
+        if (exercise.description) {
+          const desc = document.createElement("div");
+          desc.style.fontSize = "0.9rem";
+          desc.style.marginBottom = "10px";
+          desc.style.color = "#666";
+          desc.textContent = exercise.description;
+          container.appendChild(desc);
+        }
+      });
     }
 
-    window.addEventListener('resize', () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      initParticles();
-    });
+    function changeMonth(offset) {
+      const validMonths = [6, 7, 8];
+      let next = currentMonth + offset;
+      if (!validMonths.includes(next)) return;
+      currentMonth = next;
+      renderCalendar(currentMonth, currentYear);
+    }
 
-    initParticles();
-    animate();
+    fetchData();
   </script>
 </body>
 </html>
